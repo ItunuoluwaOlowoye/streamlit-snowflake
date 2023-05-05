@@ -217,7 +217,7 @@ def database_intro(page_name:str): # default page elements after authentication
     return greeting,clear_cache,page_header,attendance_date,full_date,date_column,date_comment_column
 
 def load_data(sort_columns=['full_name']): # load dataset and store in cache
-    query = 'SELECT * from employees'
+    query = 'SELECT * from "employees"'
     cursor.execute(query)
     df = cursor.fetch_pandas_all()
     df = df.dropna(how='all') # drop null rows
@@ -303,10 +303,10 @@ def save_data_updates(dataframe,date_column,group_logs): # save the updates in a
 def update_db(receiver, group_logs): # update actual data table
     cc = 'itunu.owo@gmail.com' # email recipient
     with st.spinner('Refreshing table..'):
-        db_query=f'SELECT * FROM employees'
+        db_query=f'SELECT * FROM "employees"'
         cursor.execute(db_query)
         df_toupdate = cursor.fetch_pandas_all()
-        logs_query=f'SELECT * FROM {group_logs}'
+        logs_query=f'SELECT * FROM "{group_logs}"'
         cursor.execute(logs_query)
         logs_df = cursor.fetch_pandas_all()
         logs_df = logs_df.sort_values('time_filled') # sort in ascending order by time of entry
