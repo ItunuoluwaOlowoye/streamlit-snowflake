@@ -18,4 +18,4 @@ cnx = connect(user='Itee', password='Itunu@snowflake23', account='qgrnfkj-mj5177
 # Write the data from the DataFrame to the table named "employees".
 success, nchunks, nrows, _ = write_pandas(conn=cnx, df=df, table_name='employees', database='EMPLOYEE_DATA', schema='PUBLIC', auto_create_table=True, overwrite=True)
 
-st.success('success!')
+st.write(success)
