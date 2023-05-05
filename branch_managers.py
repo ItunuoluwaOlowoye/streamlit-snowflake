@@ -8,7 +8,7 @@ import functions # a collection of user defined functions
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings') # set up Django environment and application
 application = get_wsgi_application()
 
-browser_tab_logo = Image.open('pictures/browser-tab-logo.jpg') # store tab logo in a variable
+browser_tab_logo = Image.open('pictures/browser-tab-logo.png') # store tab logo in a variable
 
 st.set_page_config(page_title='BuyMart Branch Managers Portal', page_icon=browser_tab_logo, layout='wide') # set the page layout
 
