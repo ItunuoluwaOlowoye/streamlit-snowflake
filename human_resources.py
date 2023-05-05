@@ -53,6 +53,6 @@ if functions.authenticate_user(placeholder,sb_placeholder) and st.session_state.
         functions.bar_facets(unpivot_dates_df,attendance_date,full_date,facet_by='region',number_of_facets=3) # show stats grouped by region
     else: # create time series trends
         dashboard_tab,dedicated_tab,inprogress_tab,icu_tab = functions.timeseries_trends(unpivot_dates_df, columns, facet_by='region',tab_name='attendees')
-
+    st.stop()
 elif functions.authenticate_user(placeholder,sb_placeholder) and ~st.session_state.user.groups.filter(name__in=["Human Resources"]).exists(): # after authentication and confirming that user is not in hr group:
     st.warning('You have access to the BuyMart database, however, you seem to have accessed a portal that you do not have access to. Please redirect to the correct portal for your level/role. Thank you')
