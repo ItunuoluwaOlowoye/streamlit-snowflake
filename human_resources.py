@@ -15,22 +15,22 @@ st.set_page_config(page_title='BuyMart Human Resources Portal', page_icon=browse
 placeholder = st.empty() # create a main content placeholder
 with placeholder.container(): # create a container within the placeholder
     sb_placeholder = functions.page_intro('Human Resources Portal',"This portal is only accessible to HR (human resources) staff. This is where attendance for Sunday operations is logged by HR.") # write the default page elements and store sidebar placeholder in a variable
-
+    receiver = st.text_input("What's your email address? This data will be deleted after this session")
+    
 if functions.authenticate_user(placeholder,sb_placeholder) and st.session_state.user.groups.filter(name__in=["Human Resources"]).exists(): # after authentication and confirming that user is in checkin group
     today = date.today() # today's date
-    receiver = st.text_input("What's your email address? This data will be deleted after this session")
     checkin_location = (st.session_state.user.last_name).split()[1] # store checkin location in a variable
     greeting,clear_cache,page_header,attendance_date,full_date,date_column,date_comment_column = functions.database_intro('HR Database') # default page entries
     columns = ['full_name','installation','email_address','phone_number','att_ytd',date_column,date_comment_column,'unique_id'] # columns needed
-    try:
-        full_database = functions.load_data() # load data and store in cache
-        checkin_df = full_database.loc[:,columns] # select only needed columns
-        columns.append(f'checkin_location{date_column}') # include checkin location column
-        unpivot_dates_df = functions.arrange_dates(full_database,columns,date_column,date_comment_column) # convert date columns to one column in olap format
-        team_or_nation_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent = functions.specific_date_summary_stats(unpivot_dates_df,attendance_date,team_or_nation=None) # calculate summary stats
-    except:
-        st.warning('Please select a Sunday') # if date selected is not in the columns, throw an error
-        st.stop() # stop execution until error is fixed
+    #try:
+    full_database = functions.load_data() # load data and store in cache
+    checkin_df = full_database.loc[:,columns] # select only needed columns
+    columns.append(f'checkin_location{date_column}') # include checkin location column
+    unpivot_dates_df = functions.arrange_dates(full_database,columns,date_column,date_comment_column) # convert date columns to one column in olap format
+    team_or_nation_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent = functions.specific_date_summary_stats(unpivot_dates_df,attendance_date,team_or_nation=None) # calculate summary stats
+#    except:
+ #       st.warning('Please select a Sunday') # if date selected is not in the columns, throw an error
+  #      st.stop() # stop execution until error is fixed
     with st.sidebar:
         report_type = st.selectbox('What will you like to do?',options=['View tables','See specific attendance report','See attendance trend']) # select views
     if report_type=='View tables': # table view
