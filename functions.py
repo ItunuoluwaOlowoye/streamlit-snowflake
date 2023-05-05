@@ -14,10 +14,15 @@ import gspread as gs
 import pytz
 import yagmail
 from io import BytesIO
+from snowflake.connector.pandas_tools import write_pandas
+from snowflake.connector import connect
 
 utc = pytz.UTC # for time awareness
 
 sender = 'itunu.owo@gmail.com' # mail to send emails; if this changes, don't forget to change password
+
+cnx = connect(user='Itee', password='Adenike@16', account='qgrnfkj-mj51774', 
+              database='EMPLOYEE_DATA', schema='PUBLIC', warehouse='COMPUTE_WH', role='ACCOUNTADMIN')
 
 # for bar charts
 domain = ['Present', 'Absent', 'Unknown']
@@ -291,8 +296,10 @@ def save_data_updates(dataframe,credentials,date_column,group_logs): # save the 
         dataframe.insert(0,'user','')
         dataframe['time_filled'] = datetime.now()
         dataframe['user'] = st.session_state.user.username
-        dataframe[f'Hr_location{date_column}'] = st.session_state.user.last_name
+        dataframe[f'checkin_location{date_column}'] = st.session_state.user.last_name
         dataframe['date_hired'] = pd.to_datetime(dataframe['date_hired']) # ensure date added column is in the correct datatype
+        # Write the data from the DataFrame to the table named "employees".
+        success, nchunks, nrows, _ = write_pandas(conn=cnx, df=dataframe, table_name='employees', database='EMPLOYEE_DATA', schema='PUBLIC',auto_create_table=True)
         pandas_gbq.to_gbq(dataframe=dataframe, destination_table=group_logs, project_id='the-new-ikeja', 
           chunksize=None, api_method='load_csv', if_exists='append',credentials=credentials) # save data to database
         if st.session_state.user.groups.filter(name__in=["Human Resources"]).exists(): # confirming that user is in Human Resources group

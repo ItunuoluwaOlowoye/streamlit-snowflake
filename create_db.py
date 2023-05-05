@@ -4,6 +4,7 @@ from snowflake.connector.pandas_tools import write_pandas
 from snowflake.connector import connect
 
 df = pd.read_csv('employee_data.csv',dtype=str)
+df.fillna('',inplace=True)
 df.date_hired = pd.to_datetime(df.date_hired, utc=True).dt.strftime('%Y-%m-%d')
 df.date_hired = pd.to_datetime(df.date_hired)
 df.SN = df.SN.astype(int)
