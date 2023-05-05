@@ -21,7 +21,7 @@ sender = 'itunu.owo@gmail.com' # mail to send emails; if this changes, don't for
 
 # for bar charts
 domain = ['Present', 'Absent', 'Unknown']
-range_ = ['#FFC533', 'grey', 'grey']
+range_ = ['#8e43e7', '#6c757d', '#6c757d']
 
 # interactive button to mark attendance
 BtnCellRenderer = JsCode('''
@@ -78,8 +78,8 @@ class BtnCellRenderer {
 };
 ''')
 
-# button options for checkin
-CheckinBtnCellRenderer = JsCode('''
+# button options for Hr
+HrBtnCellRenderer = JsCode('''
 class BtnCellRenderer {
     init(params) {
         this.params = params;
@@ -215,15 +215,16 @@ def database_intro(page_name:str): # default page elements after authentication
     date_comment_column = 'comment' + date_comment_format # date comment column
     return greeting,clear_cache,page_header,attendance_date,full_date,date_column,date_comment_column
 
-@st.cache_data(ttl=3*60*60) # cache for three hours
-def load_data(file_path='gs://the_new_global_db/the_new_global.csv',sort_columns=['full_name']): # load dataset and store in cache
-    df = pd.read_csv(file_path, storage_options={'token':'credentials.json'}) # read data from GCP bucket
+def load_data(sort_columns=['full_name']): # load dataset and store in cache
+    # Initialize connection.
+    conn = st.experimental_connection('snowflake', type='sql',ttl=1*60*60)
+    # Perform query.
+    df = conn.query('SELECT * from mytable;', ttl=600)
     df = df.dropna(how='all') # drop null rows
     for column in list(df.columns): # fill null cells in columns that are not datetime or float
-        if column != 'date_added' and column != 'att_ytd':
+        if column != 'date_hired' and column != 'att_ytd':
             df[column].fillna('',inplace=True)
-    df['date_added'] = pd.to_datetime(df['date_added'], infer_datetime_format=True) # change date column to datetime type
-    df['phone_number'] = df['phone_number'] # change phone number to string
+    df['date_hired'] = pd.to_datetime(df['date_hired'], infer_datetime_format=True) # change date column to datetime type
     df.sort_values(by=sort_columns, inplace=True) # sort by specified columns
     return df
 
@@ -237,13 +238,13 @@ def edit_table(full_db, dataframe, date_column, editable_columns:list): # edit i
     options_builder.configure_pagination(paginationAutoPageSize=False, paginationPageSize=10)
     options_builder.configure_side_bar()
     grid_options = options_builder.build()
-    if st.session_state.user.groups.filter(name__in=["Check-in Team"]).exists(): # confirming that user is in checkin group
+    if st.session_state.user.groups.filter(name__in=["Human Resources"]).exists(): # confirming that user is in Human Resources group
         grid_options['columnDefs'].append({"field": date_column, "header": "MarkAttendance", "pinned": True,
-            "editable": False, "maxWidth":50, "cellRenderer": CheckinBtnCellRenderer, "cellRendererParams": {"color": "#FFC533","background_color": "black"}
+            "editable": False, "maxWidth":50, "cellRenderer": HrBtnCellRenderer, "cellRendererParams": {"color": "#8e43e7","background_color": "black"}
         })
     else:
         grid_options['columnDefs'].append({"field": date_column, "header": "MarkAttendance", "pinned": True,
-            "editable": False, "maxWidth":50, "cellRenderer": BtnCellRenderer, "cellRendererParams": {"color": "#FFC533","background_color": "black"}
+            "editable": False, "maxWidth":50, "cellRenderer": BtnCellRenderer, "cellRendererParams": {"color": "#8e43e7","background_color": "black"}
         })
     # build interactive table
     interactive_table = AgGrid(dataframe, gridOptions=grid_options, fit_columns_on_grid_load=False, allow_unsafe_jscode=True, try_to_convert_back_to_original_types=False, enable_enterprise_modules=False)
@@ -258,7 +259,7 @@ def edit_table(full_db, dataframe, date_column, editable_columns:list): # edit i
     cols_to_replace = editable_columns # select columns to update
     # update selected columns
     full_modified_df.loc[full_modified_df_unique_row.isin(modified_df_unique_row), cols_to_replace] = modified_df.loc[modified_df_unique_row.isin(full_modified_df_unique_row),cols_to_replace].values
-    full_modified_df.loc[:,'date_added'] = pd.to_datetime(full_modified_df['date_added'], infer_datetime_format=True) # ensure date is in datetime format
+    full_modified_df.loc[:,'date_hired'] = pd.to_datetime(full_modified_df['date_hired'], infer_datetime_format=True) # ensure date is in datetime format
     return interactive_table,full_modified_df
 
 def recalc_att_ytd(dataframe, today): # select sundays on or before sundays
@@ -268,10 +269,10 @@ def recalc_att_ytd(dataframe, today): # select sundays on or before sundays
         date_list_column.append(pd.to_datetime(dataframe.columns[start_column], format='_%d_%b_%y'))
         start_column = int(start_column) + 3
     for i in dataframe.index: # for every person in the table
-        date_added = dataframe.loc[i,'date_added'] # select date added
+        date_hired = dataframe.loc[i,'date_hired'] # select date added
         dates_available = [] # create list to store all dates in the table that are after when the user was added to the table and are on or before today
         for date in date_list_column: # for every date present in the original table
-            if date >= date_added and date <= pd.to_datetime(today): # check if the date is on or after the user was added and on or before today
+            if date >= date_hired and date <= pd.to_datetime(today): # check if the date is on or after the user was added and on or before today
                 column_name = date.strftime('_%d_%b_%y')
                 dates_available.append(column_name) # store that date into a list
         sundays_by_today = dataframe.loc[i,dates_available] # create dataframe with only those date columns
@@ -290,11 +291,11 @@ def save_data_updates(dataframe,credentials,date_column,group_logs): # save the 
         dataframe.insert(0,'user','')
         dataframe['time_filled'] = datetime.now()
         dataframe['user'] = st.session_state.user.username
-        dataframe[f'checkin_location{date_column}'] = st.session_state.user.last_name
-        dataframe['date_added'] = pd.to_datetime(dataframe['date_added']) # ensure date added column is in the correct datatype
+        dataframe[f'Hr_location{date_column}'] = st.session_state.user.last_name
+        dataframe['date_hired'] = pd.to_datetime(dataframe['date_hired']) # ensure date added column is in the correct datatype
         pandas_gbq.to_gbq(dataframe=dataframe, destination_table=group_logs, project_id='the-new-ikeja', 
           chunksize=None, api_method='load_csv', if_exists='append',credentials=credentials) # save data to database
-        if st.session_state.user.groups.filter(name__in=["Check-in Team"]).exists(): # confirming that user is in checkin group
+        if st.session_state.user.groups.filter(name__in=["Human Resources"]).exists(): # confirming that user is in Human Resources group
             success_placeholder = st.empty() # add success message in placeholder
             success_placeholder.success('Data saved!')
             time.sleep(1)
@@ -312,7 +313,7 @@ def update_db(credentials, gs_credentials, group_logs, filepath='gs://the_new_gl
         updated_df = pd.concat([df_toupdate,logs_df],axis=0,ignore_index=True) # append entries to original db
         updated_df.drop_duplicates(['unique_id'],keep='last',inplace=True) # drop duplicate entries
         try: # reconcile datetime formats
-            updated_df.date_added = pd.to_datetime(updated_df.date_added, utc=True).dt.strftime('%Y-%m-%d')
+            updated_df.date_hired = pd.to_datetime(updated_df.date_hired, utc=True).dt.strftime('%Y-%m-%d')
         except: # send mail to self to reconcile dates
             subject = 'BigQuery and Google Sheets have done it again!'
             contents = """Reconcile 'date added' field values. Probably also check 'att_ytd' field too."""
@@ -324,7 +325,7 @@ def update_db(credentials, gs_credentials, group_logs, filepath='gs://the_new_gl
         gc = gs.authorize(gs_credentials) # give gspread library access to the private google sheet
         gs_db = gc.open_by_url(st.secrets["private_gsheets_url"]) # open the spreadsheet
         db_to_update = gs_db.worksheet('database') # open the specific sheet to update
-        updated_df.sort_values(by=['installation','SN'],inplace=True) # sort values
+        updated_df.sort_values(by=['region','SN'],inplace=True) # sort values
         updated_df.fillna('',inplace=True) # fill null values
         try: # update Google sheets
             db_to_update.update([updated_df.columns.values.tolist()] + updated_df.values.tolist(), value_input_option='USER_ENTERED')
@@ -346,7 +347,7 @@ def arrange_dates(dataframe, data_columns, date_column, date_comment_column): # 
     unpivot_df = dataframe.loc[:,needed_columns] # select only the columns stored from the full database
     unpivot_df = pd.melt(unpivot_df, id_vars=data_columns, var_name='date', value_name='attendance') # create dataframe with dates in one column for analysis
     unpivot_df['attendance'] = unpivot_df['attendance'].replace('','Unknown')
-    unpivot_df[f'checkin_location{date_column}'] = unpivot_df[f'checkin_location{date_column}'].replace('',np.nan)
+    unpivot_df[f'Hr_location{date_column}'] = unpivot_df[f'Hr_location{date_column}'].replace('',np.nan)
     return unpivot_df
 
 def presentcalc(dataframe): # calculate people present
@@ -358,21 +359,21 @@ def presentcalc(dataframe): # calculate people present
         present_attendance, present_attendance_percent = 0, 0.0
     return total_attendance, present_attendance, present_attendance_percent
 
-def specific_date_summary_stats(dataframe,attendance_date,date_column,team_or_nation='service_team'): # calculate summary statistics for a specific date, you can group by team or nation
+def specific_date_summary_stats(dataframe,attendance_date,date_column,team_or_nation='dept'): # calculate summary statistics for a specific date, you can group by team or branch
     dataframe['date'] = pd.to_datetime(dataframe['date'], format='_%d_%b_%y').dt.strftime('%Y-%m-%d') # put date column in corect format
     dataframe['att_ytd'] = dataframe['att_ytd'].replace(np.nan,0) # let all attendance percent values be numeric
     selected_day_df=dataframe[dataframe['date']==str(attendance_date)] # select data from the specified date
-    if team_or_nation is None: team_or_nation_numbers = pd.DataFrame() # empty dataframe if not grouped by team or nation
-    else: team_or_nation_numbers = selected_day_df[team_or_nation].value_counts().to_frame() # count of team or nation
+    if team_or_nation is None: team_or_nation_numbers = pd.DataFrame() # empty dataframe if not grouped by team or branch
+    else: team_or_nation_numbers = selected_day_df[team_or_nation].value_counts().to_frame() # count of team or branch
     total_members = selected_day_df['full_name'].count() # total number of people in selected day
     last_week=attendance_date-timedelta(days=7) # check last week
     last_week_full_date = last_week.strftime('%A, %d %B %Y').strip() # write date in full for dashboard
     last_week_df=dataframe[dataframe['date']==str(last_week)].reset_index() # select data one week from the selected day
     todays_total_attendance, todays_present_attendance, todays_present_attendance_percent = presentcalc(selected_day_df) # calculate attendance of the selected day
     last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent = presentcalc(last_week_df) # calculate attendance of the week before selected day
-    if st.session_state.user.groups.filter(name__in=["Check-in Team"]).exists(): # confirming that user is in checkin group
-        try: # select present checkin
-            dataframe = dataframe[dataframe[f'checkin_location{date_column}'].str.contains('Check-in') &
+    if st.session_state.user.groups.filter(name__in=["Human Resources"]).exists(): # confirming that user is in Human Resources group
+        try: # select present Hr
+            dataframe = dataframe[dataframe[f'Hr_location{date_column}'].str.contains('Hr') &
                               (dataframe['attendance'] == 'Present')]
         except: pass
     return team_or_nation_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent,dataframe
@@ -408,7 +409,7 @@ def specific_date_dashboard(full_date, team_or_nation_numbers, total_members, to
         st.markdown(f"Summary table for {full_date}")
         st.dataframe(todays_total_attendance) # show table
     # write percentage attendance
-    percent_columns.markdown(f'''{message} <font style="color:#FFC533;font-size:20px;"><strong>{todays_present_attendance_percent}%</strong></font>   of your {head_type} members were in 
+    percent_columns.markdown(f'''{message} <font style="color:#8e43e7;font-size:20px;"><strong>{todays_present_attendance_percent}%</strong></font>   of your {head_type} members were in 
     church today.''', unsafe_allow_html=True)
     # create summary paragraph
     st.markdown(f'''###### Summary Paragraph:''')
@@ -419,7 +420,7 @@ def specific_date_dashboard(full_date, team_or_nation_numbers, total_members, to
     else: # specified date attendance and previous week attendance are the same
         abs_delta=''; relativity = 'the same as'; color=':white'
     st.markdown(f'''In summary, you have **{total_members}** {head_type} members. 
-    <font style="color:#FFC533">{todays_present_attendance}</font> of them came to church today and this is {abs_delta} {color}[{relativity} last week] {last_week_full_date}.
+    <font style="color:#8e43e7">{todays_present_attendance}</font> of them came to church today and this is {abs_delta} {color}[{relativity} last week] {last_week_full_date}.
     ''', unsafe_allow_html=True)
 
 def bar_facets(dataframe,attendance_date,full_date,facet_by,number_of_facets): # create bar chart groups/facets
@@ -434,7 +435,7 @@ def bar_facets(dataframe,attendance_date,full_date,facet_by,number_of_facets): #
                      y=alt.Y('attendance', axis=alt.Axis(title=None), sort=domain),
                      color=alt.Color('attendance', scale=alt.Scale(domain=domain, range=range_), legend=None),
                      facet=alt.Facet(facet_by, columns=number_of_facets, title=title))
-             .properties(width=180, height=90)).configure_header(titleColor='grey',titleFontSize=14,labelColor='#FFC533', labelFontSize=14)
+             .properties(width=180, height=90)).configure_header(titleColor='#6c757d',titleFontSize=14,labelColor='#8e43e7', labelFontSize=14)
     # create expanders for table and bar chart in separate columns
     facets_table = st.expander(f'View attendance table by: {title}')
     facets_table.write(facet_data)
@@ -459,7 +460,7 @@ def attendance_metric(dataframe,columns,att_percent_query): # select people with
     att = att.loc[:,columns] # return specified columns
     return att
 
-def timeseries_trends(dataframe, columns, facet_by='installation',tab_name='team'): # create a time series trends section
+def timeseries_trends(dataframe, columns, facet_by='region',tab_name='team'): # create a time series trends section
     # convert date column to datetime format
     try: dataframe['date'] = pd.to_datetime(dataframe['date'])
     except: dataframe['date'] = pd.to_datetime(dataframe['date'], format='_%d_%b_%y')
@@ -483,7 +484,7 @@ def timeseries_trends(dataframe, columns, facet_by='installation',tab_name='team
         mean_column.write(f'You have {len(individual_att_ytd)} people to account for.') # write how many people to account for
         mean_column.metric('Average attendance', value=mean_att, help='Average attendance over the selected timeframe') # write mean metric
         with trend_column: # create line chart
-            chart = alt.Chart(filtered_linechart_data).mark_line(color='#FFC533')\
+            chart = alt.Chart(filtered_linechart_data).mark_line(color='#8e43e7')\
             .encode(x=alt.X('date:T', axis=alt.Axis(title=None)),
                     y=alt.Y('full_name', axis=alt.Axis(title='Attendees')),
                     tooltip=['date:T', 'full_name'])
@@ -495,13 +496,13 @@ def timeseries_trends(dataframe, columns, facet_by='installation',tab_name='team
             faceted_linechart_data = faceted_linechart_data.replace(np.nan,0).reset_index()
             faceted_linechart_data = pd.melt(faceted_linechart_data, id_vars=[facet_by], var_name='date', value_name='full_name')
             title = str(facet_by).replace('_',' ').title()
-            chart = (alt.Chart(faceted_linechart_data).mark_line(color='#FFC533')
+            chart = (alt.Chart(faceted_linechart_data).mark_line(color='#8e43e7')
                      .encode(x=alt.X('date:T', axis=alt.Axis(title=None)), 
                              y=alt.Y('full_name', axis=alt.Axis(title='Attendees')), 
                              tooltip=['date:T', 'full_name'], facet=alt.Facet(facet_by, columns=3, title=title))
-                    .properties(width=180, height=90)).configure_header(titleColor='grey',
+                    .properties(width=180, height=90)).configure_header(titleColor='#6c757d',
                                                                         titleFontSize=14, 
-                                                                        labelColor='#FFC533',
+                                                                        labelColor='#8e43e7',
                                                                         labelFontSize=14)
             chart_expander = st.expander(f'View trends by: {title}')
             chart=chart_expander.altair_chart(chart)
@@ -526,26 +527,26 @@ def load_hall_counts(credentials,bqtable='hall_count.global_hall_count'): # load
     query=f'SELECT * FROM {bqtable}' # query bq table
     hall_count_df = pd.read_gbq(query, project_id='the-new-ikeja', credentials=credentials) # read table
     hall_count_df = hall_count_df.sort_values(['date','time_filled']) # sort in ascending order by time of entry
-    hall_count_df.drop_duplicates(['date','installation'],keep='last',inplace=True) # drop duplicate entries
+    hall_count_df.drop_duplicates(['date','region'],keep='last',inplace=True) # drop duplicate entries
     return hall_count_df
 
 def save_hall_counts(credentials,gs_credentials,values:list,bqtable='hall_count.global_hall_count'): # save hall count record to bq table
     body = dict(values=values) # store form values in a dictionary
     df = pd.DataFrame(body).transpose() # convert dict to DataFrame and transpose
-    df.rename(columns={0:'date', 1:'installation',2:'hall_count_adults',
+    df.rename(columns={0:'date', 1:'region',2:'hall_count_adults',
                        3:'hall_count_children'}, inplace=True) # rename columns as needed
     df.reset_index(drop=True,inplace=True) # reset index
     df['time_filled'] = datetime.now() # fill log time entry
     with st.spinner('Saving data...'):
-        df.sort_values(by=['date','installation'],inplace=True) # sort values
+        df.sort_values(by=['date','region'],inplace=True) # sort values
         pandas_gbq.to_gbq(dataframe=df, destination_table=bqtable, project_id='the-new-ikeja', 
           chunksize=None, api_method='load_csv', if_exists='append',credentials=credentials) # save data to database
         gc = gs.authorize(gs_credentials) # give gspread library access to the private google sheet
         gs_db = gc.open_by_url(st.secrets["hall_counts_url"]) # open the spreadsheet
         df.fillna('',inplace=True) # fill null values
-        df_gs = df.loc[:,['date','installation','hall_count_adults']]
+        df_gs = df.loc[:,['date','region','hall_count_adults']]
         df_gs['date'] = pd.to_datetime(df_gs['date']).dt.strftime('%B %d, %Y')
-        df_gs.rename(columns={'date':'Date','installation':'Installation','hall_count_adults':'Count'},inplace=True)
+        df_gs.rename(columns={'date':'Date','region':'region','hall_count_adults':'Count'},inplace=True)
         hc_to_update = gs_db.worksheet('Hall Counts') # open the specific sheet to update
         hc_to_update.update([df_gs.columns.values.tolist()] + df_gs.values.tolist(), value_input_option='USER_ENTERED')
         success_placeholder = st.empty() # add success message in placeholder
@@ -553,10 +554,10 @@ def save_hall_counts(credentials,gs_credentials,values:list,bqtable='hall_count.
         time.sleep(1)
         success_placeholder.empty()
 
-def save_checkin_firsttimers_notindb(dataframe, checkin_location, first_timers, not_in_db, credentials, bqtable='hall_count.for_variance_calc'): # save first timers and not in db numbers
+def save_Hr_firsttimers_notindb(dataframe, Hr_location, first_timers, not_in_db, credentials, bqtable='hall_count.for_variance_calc'): # save first timers and not in db numbers
     with st.spinner('Saving data...'):
-        dataframe = dataframe[dataframe['installation'].eq(checkin_location)] # select relevant installation
-        condition = [dataframe['installation'].eq(checkin_location)] # select checkin location
+        dataframe = dataframe[dataframe['region'].eq(Hr_location)] # select relevant region
+        condition = [dataframe['region'].eq(Hr_location)] # select Human Resources location
         ft_choice = [first_timers] # create array of first timers numbers
         nidb_choice = [not_in_db] # create array of not in db numbers
         dataframe['count_first_timers'] = np.select(condition, ft_choice, default=dataframe['count_first_timers']) # update first timers numbers in hall count dataframe
@@ -567,24 +568,24 @@ def save_checkin_firsttimers_notindb(dataframe, checkin_location, first_timers, 
             chunksize=None, api_method='load_csv', if_exists='append',credentials=credentials) # save data to database
         st.success('Updated!')
 
-def hall_count_variance(dataframe,attendance_date,credentials,group_by_column): # calculate checkin vs hall count variance
-    dataframe = dataframe[dataframe[group_by_column].str.contains('Check-in') & (dataframe['attendance']=='Present')] # restrict to present from checkin
+def hall_count_variance(dataframe,attendance_date,credentials,group_by_column): # calculate Human Resources vs hall count variance
+    dataframe = dataframe[dataframe[group_by_column].str.contains('Hr') & (dataframe['attendance']=='Present')] # restrict to present from Hr
     dataframe = dataframe[dataframe['date']==str(attendance_date)] # select specified date from data table
     dataframe=dataframe.groupby(group_by_column).count()['attendance'].reset_index() # group by column selected to facet by and reset index
     dataframe.rename(columns={'attendance':'count'},inplace=True)# rename attendance column to count
-    dataframe[['checkin','installation']] = dataframe[group_by_column].str.split(expand=True) # split checkin location column
+    dataframe[['Hr','region']] = dataframe[group_by_column].str.split(expand=True) # split Human Resources location column
     hall_counts = load_hall_counts(credentials,bqtable='hall_count.for_variance_calc') # load updated hallcount dataframe
     hall_counts['date'] = pd.to_datetime(hall_counts['date']).dt.strftime('%Y-%m-%d') # convert date column in hal count to string
     hall_counts = hall_counts[hall_counts['date']==str(attendance_date)] # filter to selected date
-    dataframe = dataframe.merge(hall_counts, how='left', on='installation') # merge with hall counts
-    dataframe['checkin_attendance'] = dataframe['count'] + dataframe['count_first_timers'] + dataframe['count_not_in_db'] # calc total checkin attendance
-    variance = dataframe['hall_count_adults']-dataframe['checkin_attendance'] # calculate variance
+    dataframe = dataframe.merge(hall_counts, how='left', on='region') # merge with hall counts
+    dataframe['Hr_attendance'] = dataframe['count'] + dataframe['count_first_timers'] + dataframe['count_not_in_db'] # calc total Human Resources attendance
+    variance = dataframe['hall_count_adults']-dataframe['Hr_attendance'] # calculate variance
     dataframe['percent_variance'] = round((variance/dataframe['hall_count_adults'])*100,2) # calculate percentage variance in 2 decimal places
     dataframe.rename(columns={'count':'count_in_db'},inplace=True) # rename count column
     dataframe = dataframe.iloc[:,[5,0,12,6,11,1,9,8]] # rearrange columns needed
     st.write(dataframe)
 
-def modify_person_details(credentials, biodata_df, installation, df_for_modify, modify='service_team', action='addition'): # modify single person details
+def modify_person_details(credentials, biodata_df, region, df_for_modify, modify='dept', action='addition'): # modify single person details
     modify_label = modify.replace('_',' ').title() # how to label what to modify
     search_id_col, id_col = st.columns([1,4])
     search_id = search_id_col.selectbox('Search group:', ['Full name','Email address','Phone number']) # select id to search by
@@ -595,15 +596,15 @@ def modify_person_details(credentials, biodata_df, installation, df_for_modify, 
     id = id_col.selectbox(f"What is the person's {search_id.lower()}?", options=search_list) # ask for id
     bio_details = biodata_df[biodata_df[search_group]==id] # select details of that id
     bio_display = bio_details.set_index(search_group) # how to display details
-    try: bio_installation = bio_display.loc[id,'installation'] # store person's installation in a variable
+    try: bio_region = bio_display.loc[id,'region'] # store person's region in a variable
     except: pass
     # process for different table lengths
     if len(bio_details) == 0: pass
     if len(bio_details) > 1: st.warning(f'There are multiple entries with this {search_group}. Please pick another to uniquely identify this person')
-    elif len(bio_details) == 1 and bio_installation != installation: # if record is unique but installation is different from user's installation
-        st.warning(f'There is a record with this {search_id} but it is listed under another installation as shown below. Please liaise with the installation to rectify this')
+    elif len(bio_details) == 1 and bio_region != region: # if record is unique but region is different from user's region
+        st.warning(f'There is a record with this {search_id} but it is listed under another region as shown below. Please liaise with the region to rectify this')
         st.dataframe(bio_display)
-    elif len(bio_details)==1 and bio_installation==installation: # if record is unique and installation is same as user's
+    elif len(bio_details)==1 and bio_region==region: # if record is unique and region is same as user's
         st.dataframe(bio_display)
         radio_col, value_col = st.columns([1,4])
         correct = radio_col.radio('This is the correct person.',['Yes','No'],horizontal=True) # ask if record is correct
@@ -613,16 +614,16 @@ def modify_person_details(credentials, biodata_df, installation, df_for_modify, 
             options_list = list(options_to_choose) # create list of available options
             # store update in data record
             if (action=='addition') or (action=='assignment') or (action=='transfer'): # for additions
-                value = value_col.selectbox(f'Select {modify_label}', options=options_list) # select new team or nation
+                value = value_col.selectbox(f'Select {modify_label}', options=options_list) # select new team or branch
                 bio_details[modify] = value # overwrite previous value
-                if modify=='service_team': # for service teams, overwrite team head field
-                    teams = df_for_modify[[modify,'team_head']].drop_duplicates()
-                    team_head = teams[teams[modify]==value].iloc[0,1]
-                    bio_details['team_head'] = team_head
+                if modify=='dept': # for service teams, overwrite team head field
+                    teams = df_for_modify[[modify,'dept_head']].drop_duplicates()
+                    dept_head = teams[teams[modify]==value].iloc[0,1]
+                    bio_details['dept_head'] = dept_head
             elif action=='deletion': # for deletions...
                 bio_details[modify] = np.nan
-                if modify=='service_team': bio_details['team_head'] = np.nan
-                if modify=='nation': bio_details['nation_head'] = np.nan
+                if modify=='dept': bio_details['dept_head'] = np.nan
+                if modify=='branch': bio_details['branch_head'] = np.nan
             reason = value_col.text_area('Reason') # add reason
             bio_details['reason'] = reason # update reason
             bio_details['time_filled'] = datetime.now() # log time filled
@@ -645,17 +646,17 @@ def modify_person_details(credentials, biodata_df, installation, df_for_modify, 
                 st.cache_data.clear()
                 st.success(f'Request for {action} has been logged successfully')           
 
-def modify_people_details(credentials, installation_biodata_df, options_df, modify='service_team', action='addition'): # modify multiple people details
+def modify_people_details(credentials, region_biodata_df, options_df, modify='dept', action='addition'): # modify multiple people details
     modify_label = modify.replace('_',' ').title() # how to label what to modify
     search_id_col, id_col = st.columns([1,4])
     search_id = search_id_col.selectbox('Search group:', ['Full name','Email address','Phone number'],key='multisearch') # select id to search by
     search_group = search_id.replace(' ','_').lower() # create field to search by converting search id to snake case
-    search_list = list(installation_biodata_df[search_group]) # create list of search results
+    search_list = list(region_biodata_df[search_group]) # create list of search results
     while '' in search_list: search_list.remove('') # remove blank results
     search_list.insert(0,'') # insert only one blank entry at the start of the search results
     ids = id_col.multiselect(f"What are their {search_id.lower()}s?", options=search_list) # ask for id
     selected_ids = pd.DataFrame(ids,columns=[search_group]) # put selection in dataframe
-    df_download = installation_biodata_df.merge(selected_ids, how='inner', on=search_group) # select biodata of selected people
+    df_download = region_biodata_df.merge(selected_ids, how='inner', on=search_group) # select biodata of selected people
     if df_download.empty is False: st.dataframe(df_download.set_index(search_group)) # see data to confirm these are the people whose details to modify
     options_to_choose = sorted(options_df[options_df[modify].notnull()][modify].unique()) # select distinct available options
     options_list = list(options_to_choose) # create list of available options to use as data validation
@@ -668,10 +669,10 @@ def modify_people_details(credentials, installation_biodata_df, options_df, modi
     worksheet.protect() # protect workbook
     worksheet.write('H1','reason', locked) # create new row for reason
     worksheet.set_column(0, 7, 25) # increase column width for all non-empty columns
-    if modify == 'nation_head':
+    if modify == 'branch_head':
         worksheet.set_column('F2:F', None, unlocked)
         worksheet.data_validation('F2:F10000', {'validate':'list', 'source':options_list})
-    elif modify == 'installation':
+    elif modify == 'region':
         worksheet.set_column('B2:B', None, unlocked)
         worksheet.data_validation('B2:B10000', {'validate':'list', 'source':options_list})
     else:
@@ -689,23 +690,23 @@ def modify_people_details(credentials, installation_biodata_df, options_df, modi
             df_upload = pd.read_excel(uploaded_file, dtype={'phone_number':'object'}) # read uploaded file
             for column in list(df_upload.columns): # fill null cells in columns that are not datetime or float
                 df_upload[column].fillna('',inplace=True)
-            drop_modify_df = installation_biodata_df.drop([modify],axis=1) # remove column in both dfs
+            drop_modify_df = region_biodata_df.drop([modify],axis=1) # remove column in both dfs
             cols_to_merge = list(df_upload.columns) # create list of columns to merge by
             cols_to_merge.remove(modify); cols_to_merge.remove('reason')
             people_details = drop_modify_df.merge(df_upload, how='inner', on=cols_to_merge) # merge biodata df with uploaded df
             people_details['time_filled'] = datetime.now() # log time filled
             people_details['user'] = st.session_state.user.username # log user
             if (action=='addition') or (action=='assignment') or (action=='transfer'): # for additions
-                if modify=='service_team': # if service teams, update team head field also
-                    teams = installation_biodata_df[[modify,'team_head']].drop_duplicates()
-                    people_details.drop('team_head',axis=1,inplace=True)
+                if modify=='dept': # if service teams, update team head field also
+                    teams = region_biodata_df[[modify,'dept_head']].drop_duplicates()
+                    people_details.drop('dept_head',axis=1,inplace=True)
                     people_details = people_details.merge(teams, how='left', on=modify)
-                elif modify=='nation':
-                    people_details['nation_head'] = np.nan
+                elif modify=='branch':
+                    people_details['branch_head'] = np.nan
             if action=='deletion': # clear field if delete
                 people_details[modify] = np.nan
-                if modify=='service_team': people_details['team_head'] = np.nan
-                if modify=='nation': people_details['nation_head'] = np.nan
+                if modify=='dept': people_details['dept_head'] = np.nan
+                if modify=='branch': people_details['branch_head'] = np.nan
             if st.button('Request', key='multirqst'): # to save request
                 user_last_name = st.session_state.user.last_name # store user last name in a variable
                 table_name = user_last_name.replace(' ','_') # store table name in a variable
@@ -725,28 +726,28 @@ def modify_people_details(credentials, installation_biodata_df, options_df, modi
                 st.success(f'Request for {action} has been logged successfully')
         except: st.error('An error occured!'); st.stop()
 
-def change_head(credentials, installation_biodata_df, modify='service_team', head='team_head'): # change service team or nation head
+def change_head(credentials, region_biodata_df, modify='dept', head='dept_head'): # change service team or branch head
     modify_label = modify.replace('_',' ').title() # how to label what to modify
     head_label = head.replace('_',' ').title() # how to label what to modify
-    full_list_names = list(installation_biodata_df['full_name']) # create list of full name
-    teams = installation_biodata_df[[modify,head]].drop_duplicates() # create df of service teams/nation and the respective heads
+    full_list_names = list(region_biodata_df['full_name']) # create list of full name
+    teams = region_biodata_df[[modify,head]].drop_duplicates() # create df of service teams/branch and the respective heads
     teams_list = list(teams[modify].drop_duplicates()) # create list of teams
-    team_heads_list = list(teams[head]) # create list of current team heads
+    dept_heads_list = list(teams[head]) # create list of current team heads
     while '' in full_list_names: full_list_names.remove('') # remove all blanks in the list
     while '' in teams_list: teams_list.remove('') # remove all blanks in the list
-    while '' in team_heads_list: team_heads_list.remove('') # remove all blanks in the list
+    while '' in dept_heads_list: dept_heads_list.remove('') # remove all blanks in the list
     full_list_names.insert(0,'') # add only one blank to the start of the list
     col1, col2, col3 = st.columns(3) # create three columns
     team_value = col1.selectbox(f'Select the {modify_label}',teams_list) # team to change
-    if modify=='service_team':
-        team_head = teams[teams[modify]==team_value].iloc[0,1]
-        current_team_head = col2.text_input(f'Current {head_label}', team_head, disabled=True) # current team head
-    elif modify=='nation':
-        team_head = teams[teams[modify]==team_value].iloc[:,1]
-        current_team_head = col2.selectbox(f'Current {head_label}', team_head) # current team head
-    new_team_head = col3.selectbox('Select the new head', full_list_names) # select new head
+    if modify=='dept':
+        dept_head = teams[teams[modify]==team_value].iloc[0,1]
+        current_dept_head = col2.text_input(f'Current {head_label}', dept_head, disabled=True) # current team head
+    elif modify=='branch':
+        dept_head = teams[teams[modify]==team_value].iloc[:,1]
+        current_dept_head = col2.selectbox(f'Current {head_label}', dept_head) # current team head
+    new_dept_head = col3.selectbox('Select the new head', full_list_names) # select new head
     head_change = pd.DataFrame()
-    head_change.loc[0,['team','current_team_head','new_team_head']] = team_value, current_team_head, new_team_head
+    head_change.loc[0,['team','current_dept_head','new_dept_head']] = team_value, current_dept_head, new_dept_head
     submit = st.button('Request') # to save request
     if submit:
         user_last_name = st.session_state.user.last_name # store user last name in a variable
@@ -765,7 +766,7 @@ def change_head(credentials, installation_biodata_df, modify='service_team', hea
             st.cache_data.clear()
             st.success(f'Change request has been logged successfully')
 
-def modify_single_installation_details(credentials, biodata_df, installation, df_for_modify, modify='installation', action='addition'): # modify single person's installation
+def modify_single_region_details(credentials, biodata_df, region, df_for_modify, modify='region', action='addition'): # modify single person's region
     modify_label = modify.replace('_',' ').title() # how to label what to modify
     search_id_col, id_col = st.columns([1,4])
     search_id = search_id_col.selectbox('Search group:', ['Full name','Email address','Phone number']) # select id to search by
@@ -776,15 +777,15 @@ def modify_single_installation_details(credentials, biodata_df, installation, df
     id = id_col.selectbox(f"What is the person's {search_id.lower()}?", options=search_list) # ask for id
     bio_details = biodata_df[biodata_df[search_group]==id] # select details of that id
     bio_display = bio_details.set_index(search_group) # how to display details
-    try: bio_installation = bio_display.loc[id,'installation'] # store person's installation in a variable
+    try: bio_region = bio_display.loc[id,'region'] # store person's region in a variable
     except: pass
     # process for different table lengths
     if len(bio_details) == 0: pass
     if len(bio_details) > 1: st.warning(f'There are multiple entries with this {search_group}. Please pick another to uniquely identify this person')
-    elif len(bio_details) == 1 and bio_installation == installation: # if record is unique but installation is different from user's installation
-        st.warning(f'There is a record with this {search_id} but it is already listed under your installation')
+    elif len(bio_details) == 1 and bio_region == region: # if record is unique but region is different from user's region
+        st.warning(f'There is a record with this {search_id} but it is already listed under your region')
         st.dataframe(bio_display)
-    elif len(bio_details)==1 and bio_installation!=installation: # if record is unique and installation is same as user's
+    elif len(bio_details)==1 and bio_region!=region: # if record is unique and region is same as user's
         st.dataframe(bio_display)
         radio_col, value_col = st.columns([1,4])
         correct = radio_col.radio('This is the correct person.',['Yes','No'],horizontal=True) # ask if record is correct
@@ -794,7 +795,7 @@ def modify_single_installation_details(credentials, biodata_df, installation, df
             options_list = list(options_to_choose) # create list of available options
             # store update in data record
             if (action=='addition'): # for additions
-                value = value_col.selectbox(f'Select {modify_label}', options=options_list) # select new team or nation
+                value = value_col.selectbox(f'Select {modify_label}', options=options_list) # select new team or branch
                 bio_details[modify] = value # overwrite previous value
             elif action=='deletion': # for deletions...
                 bio_details[modify] = np.nan
