@@ -5,6 +5,7 @@ streamlit-aggrid==0.3.3
 streamlit==1.22.0
 Django==4.1.5
 yagmail==0.15.293
+pyarrow==10.0.1
 snowflake-connector-python==3.0.3
 snowflake-sqlalchemy==1.4.7
 SQLAlchemy==1.4.48
