@@ -172,7 +172,7 @@ def page_intro(header,body): # default page elements
     with st.sidebar: # add the creed to the sidebar
         sb_placeholder = st.empty() # add to a container
         with sb_placeholder.container():
-            st.title('The Business')
+            st.title('BuyMart Ecommerce')
             st.markdown('''This is a fictitious ecommerce company that runs special inventorization operations on Sundays.<br>
             There is a shift roster for every member of staff, however, attendance is not compulsory as long as someone can cover your shift.<br>
             There is a special bonus given at the end of the year based on your percentage attendance throughout the year.<br>
@@ -359,8 +359,8 @@ def specific_date_summary_stats(dataframe,attendance_date,date_column,team_or_na
     todays_total_attendance, todays_present_attendance, todays_present_attendance_percent = presentcalc(selected_day_df) # calculate attendance of the selected day
     last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent = presentcalc(last_week_df) # calculate attendance of the week before selected day
     if st.session_state.user.groups.filter(name__in=["Human Resources"]).exists(): # confirming that user is in Human Resources group
-        try: # select present Hr
-            dataframe = dataframe[dataframe[f'checkin_location{date_column}'].str.contains('Hr') &
+        try: # select present by Hr
+            dataframe = dataframe[dataframe[f'checkin_location{date_column}'].str.startswith('HR') &
                               (dataframe['attendance'] == 'Present')]
         except: pass
     return team_or_nation_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent,dataframe

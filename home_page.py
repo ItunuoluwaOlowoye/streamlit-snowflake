@@ -5,9 +5,9 @@ from functions import page_intro, get_img_with_href # collection of user defined
 
 browser_tab_logo = Image.open('pictures/browser-tab-logo.jpg')
 
-st.set_page_config(page_title='The New Data Management', page_icon=browser_tab_logo, layout='wide') # set the page layout
+st.set_page_config(page_title='BuyMart Data Management', page_icon=browser_tab_logo, layout='wide') # set the page layout
 
-page_intro('The New Data Management Studio','Welcome to the data management studio. Please select your group below.')
+page_intro('BuyMart Data Management Studio','Welcome to the data management studio. Please select your group below.')
 
 stack1, stack2, stack3 = st.columns([1,1,1.5]) # stack of different groups
 
