@@ -20,10 +20,10 @@ engine = create_engine(
     ),echo_pool=True, pool_size=10, max_overflow=20
 )
 
+connection = engine.connect()
 df_sensor = pd.read_csv('employee_data.csv')
 
 try:
-    connection = engine.connect()
     df_sensor.columns = map(str.upper, df_sensor.columns)
     df_sensor.to_sql('tb_equipments'.lower(), con=connection, 
     schema='public', index=False, if_exists='append', chunksize=16000)
