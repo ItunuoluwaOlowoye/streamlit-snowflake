@@ -10,19 +10,13 @@ import functions # a collection of user defined functions
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings') # set up Django environment and application
 application = get_wsgi_application()
 
-browser_tab_logo = Image.open('pictures/browser-tab-logo.jpg') # store tab logo in a variable
+browser_tab_logo = Image.open('pictures/browser-tab-logo.png') # store tab logo in a variable
 
 st.set_page_config(page_title='The New Checkin Portal', page_icon=browser_tab_logo, layout='wide') # set the page layout
 
-# for connecting to bigquery table
-credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"])
-
-# for connecting to google sheets
-gs_credentials = ServiceAccountCredentials.from_json_keyfile_name('credentials.json')
-
 placeholder = st.empty() # create a main content placeholder
 with placeholder.container(): # create a container within the placeholder
-    sb_placeholder = functions.page_intro('Check-in Portal',"Please log into the Check-In Portal") # write the default page elements and store sidebar placeholder in a variable
+    sb_placeholder = functions.page_intro('Human Resources Portal',"This portal is only accessible to HR (human resources) staff. This is where attendance for Sunday operations is logged by HR.") # write the default page elements and store sidebar placeholder in a variable
 
 if functions.authenticate_user(placeholder,sb_placeholder) and st.session_state.user.groups.filter(name__in=["Check-in Team"]).exists(): # after authentication and confirming that user is in checkin group
     today = date.today() # today's date

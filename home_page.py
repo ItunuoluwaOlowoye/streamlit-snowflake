@@ -3,9 +3,7 @@ import streamlit as st
 import os
 from functions import page_intro, get_img_with_href # collection of user defined functions
 
-browser_tab_logo = Image.open('pictures/browser-tab-logo.png')
-
-st.set_page_config(page_title='BuyMart Data Management', page_icon=browser_tab_logo, layout='wide') # set the page layout
+st.set_page_config(page_title='BuyMart Data Management', page_icon=Image.open('pictures/browser-tab-logo.png'), layout='wide') # set the page layout
 
 page_intro('BuyMart Data Management Studio','Welcome to the data management studio. Please select your group below.')
 
