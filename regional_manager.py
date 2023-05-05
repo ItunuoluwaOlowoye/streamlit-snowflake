@@ -40,7 +40,7 @@ if functions.authenticate_user(placeholder,sb_placeholder) and st.session_state.
                 save = st.button('Save updates',help='This button saves your updates and refreshes the table') # show a save button
                 if save: # save button
                     functions.recalc_att_ytd(full_modified_df,today) # recalculate attendance percentage
-                    functions.save_data_updates(full_modified_df,credentials,date_column,group_logs=f'logs.{regional_manager}') # save to bqtable
+                    functions.save_data_updates(full_modified_df,date_column,group_logs=f'{regional_manager}') # save to bqtable
                     functions.update_db(credentials,gs_credentials,group_logs=f'logs.{regional_manager}') # update original db
                     st.cache_data.clear() # clear cache
                     st.experimental_rerun() # rerun app
