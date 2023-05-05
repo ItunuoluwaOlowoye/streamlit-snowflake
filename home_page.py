@@ -7,7 +7,7 @@ st.set_page_config(page_title='BuyMart Data Management', page_icon=Image.open('p
 
 page_intro('BuyMart Data Management Studio','Welcome to the data management studio. Please select your group below.')
 
-stack1, stack2, stack3 = st.columns([1,1,1.5]) # stack of different groups
+stack1, stack2, stack3 = st.columns([1.2,1,1.2]) # stack of different groups
 
 # link all pictures to url
 html_dict = {}

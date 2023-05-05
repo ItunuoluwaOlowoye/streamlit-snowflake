@@ -162,7 +162,8 @@ def page_intro(header,body): # default page elements
     logo_column.title('')
     logo_column.image(inset_logo) # insert the body logo
     header_column.title(header) # write the header
-    st.write(body) # write the body
+    st.markdown(body) # write the body
+    receiver = st.text_input("What's your actual email address? This data will be deleted after this session")
     
     with st.sidebar: # add the creed to the sidebar
         sb_placeholder = st.empty() # add to a container
@@ -172,7 +173,7 @@ def page_intro(header,body): # default page elements
             There is a shift roster for every member of staff, however, attendance is not compulsory as long as someone can cover your shift.<br>
             There is a special bonus given at the end of the year based on your percentage attendance throughout the year.<br>
             There are no breaks due to public holidays except on Christmas Day and New Year's Day''', unsafe_allow_html=True)
-    return sb_placeholder # store this sidebar placeholder to a variable when calling the function
+    return sb_placeholder,receiver # store this sidebar placeholder to a variable when calling the function
 
 def password_entered(): # storing session usernames and passwords
     #Checks whether a password entered by the user is correct.
