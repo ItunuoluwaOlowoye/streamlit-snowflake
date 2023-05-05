@@ -11,12 +11,8 @@ df_sensor = pd.read_csv('employee_data.csv')
 
 connection = st.experimental_connection('snowflake', type='sql')
 
-try:
-    df_sensor.columns = map(str.upper, df_sensor.columns)
-    df_sensor.to_sql('tb_equipments'.lower(), con=connection, 
-    schema='public', index=False, if_exists='append', chunksize=16000)
-    results = connection.execute('select count(1) from tb_equipments').fetchone()
-    st.write(results[0])
-
-finally: 
-    connection.close()
+df_sensor.columns = map(str.upper, df_sensor.columns)
+df_sensor.to_sql('tb_equipments'.lower(), con=connection, 
+                 schema='public', index=False, if_exists='append', chunksize=16000)
+results = connection.execute('select count(1) from tb_equipments').fetchone()
+st.write(results[0])
