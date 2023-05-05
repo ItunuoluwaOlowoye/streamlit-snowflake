@@ -5,23 +5,18 @@ import base64
 from django.contrib.auth import authenticate
 from PIL import Image
 import pandas as pd
-import pandas_gbq
 import numpy as np
 import time
 from datetime import datetime,timedelta,date
 import altair as alt
-import gspread as gs
 import pytz
 import yagmail
-from io import BytesIO
 from snowflake.connector.pandas_tools import write_pandas
 from snowflake.connector import connect
 
 utc = pytz.UTC # for time awareness
 
 sender = 'itunu.owo@gmail.com' # mail to send emails; if this changes, don't forget to change password
-
-read_connection = st.experimental_connection('snowflake', type='sql')
 
 write_connection = connect(user='Itee', password='Itunu@snowflake23', account='qgrnfkj-mj51774', 
               database='EMPLOYEE_DATA', schema='PUBLIC', warehouse='COMPUTE_WH', role='ACCOUNTADMIN')
@@ -221,6 +216,7 @@ def database_intro(page_name:str): # default page elements after authentication
     return greeting,clear_cache,page_header,attendance_date,full_date,date_column,date_comment_column
 
 def load_data(sort_columns=['full_name']): # load dataset and store in cache
+    read_connection = st.experimental_connection('snowflake', type='sql')
     df = read_connection.query('SELECT * from employees', ttl=600)
     df = df.dropna(how='all') # drop null rows
     for column in list(df.columns): # fill null cells in columns that are not datetime or float
@@ -305,6 +301,7 @@ def save_data_updates(dataframe,date_column,group_logs): # save the updates in a
 def update_db(receiver, group_logs): # update actual data table
     cc = 'itunu.owo@gmail.com' # email recipient
     with st.spinner('Refreshing table..'):
+        read_connection = st.experimental_connection('snowflake', type='sql')
         df_toupdate = read_connection.query('SELECT * from employees', ttl=300)
         query=f'SELECT * FROM {group_logs}'
         logs_df = read_connection.query('SELECT * from employees', ttl=300) # read logs
