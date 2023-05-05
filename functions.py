@@ -323,7 +323,7 @@ def update_db(receiver, group_logs): # update actual data table
             yag.send(to=receiver, cc=cc, subject=subject, contents=contents)
             pass
         success, nchunks, nrows, _ = write_pandas(conn=write_connection, df=updated_df, table_name='employees', database='EMPLOYEE_DATA', schema='PUBLIC', auto_create_table=True, overwrite=True)
-        st.success(success)
+        st.success('Data updated!')
 
 def arrange_dates(dataframe, data_columns, date_column, date_comment_column): # collate all date columns to one column for analysis purposes
     dates_list=[] # create list to store date columns
