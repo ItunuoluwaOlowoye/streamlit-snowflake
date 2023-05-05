@@ -7,12 +7,14 @@ snowflake_account = 'qgrnfkj-mj51774'
 snowflake_warehouse = 'COMPUTE_WH'
 snowflake_database = 'EMPLOYEE_DATA'
 snowflake_schema = 'PUBLIC'
+
 df_sensor = pd.read_csv('employee_data.csv')
 
 connection = st.experimental_connection('snowflake', type='sql')
 
-df_sensor.columns = map(str.upper, df_sensor.columns)
-df_sensor.to_sql('tb_equipments'.lower(), con=connection, 
-                 schema='public', index=False, if_exists='append', chunksize=16000)
+import pandas
+from snowflake.connector.pandas_tools import pd_writer
+
+df_sensor.to_sql('employees', con=connection, schema='PUBLIC', index=False, method=pd_writer)
 results = connection.execute('select count(1) from tb_equipments').fetchone()
 st.write(results[0])
