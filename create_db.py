@@ -12,7 +12,7 @@ df.phone_number = df.phone_number.astype('str')
 st.write(df.dtypes)
 st.write(df)
 
-connection = st.experimental_connection('snowflake', type='sql')
+connection = st.experimental_connection('snowflake', type='sql',)
 
 cnx = connect(user='Itee', password='Itunu@snowflake23', account='qgrnfkj-mj51774', 
               database='EMPLOYEE_DATA', schema='PUBLIC', warehouse='COMPUTE_WH', role='ACCOUNTADMIN')
