@@ -304,7 +304,7 @@ def update_db(receiver, group_logs): # update actual data table
         read_connection = st.experimental_connection('snowflake', type='sql')
         df_toupdate = read_connection.query('SELECT * from employees', ttl=300)
         query=f'SELECT * FROM {group_logs}'
-        logs_df = read_connection.query('SELECT * from employees', ttl=300) # read logs
+        logs_df = read_connection.query(query, ttl=300) # read logs
         logs_df = logs_df.sort_values('time_filled') # sort in ascending order by time of entry
         logs_df.drop(['user','time_filled'],axis=1,inplace=True) # drop user and time filled columns
         logs_df.drop_duplicates(['unique_id'],keep='last',inplace=True) # drop duplicate entries
