@@ -10,6 +10,7 @@ df.date_hired = pd.to_datetime(df.date_hired)
 df.SN = df.SN.astype(int)
 df.att_ytd = df.att_ytd.astype(float)
 st.write(df.dtypes)
+st.write(df)
 
 connection = st.experimental_connection('snowflake', type='sql')
 
