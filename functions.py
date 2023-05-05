@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import time
 from datetime import datetime,timedelta,date
+import datetime as dt
 import altair as alt
 import pytz
 import yagmail
@@ -289,10 +290,10 @@ def save_data_updates(dataframe,date_column,group_logs): # save the updates in a
         # insert log details columns
         dataframe.insert(0,'time_filled','')
         dataframe.insert(0,'user','')
-        dataframe['time_filled'] = datetime.now()
+        dataframe['time_filled'] = datetime.now(dt.timezone.utc)
         dataframe['user'] = st.session_state.user.username
         dataframe[f'checkin_location{date_column}'] = st.session_state.user.last_name
-        dataframe['date_hired'] = pd.to_datetime(dataframe['date_hired']) # ensure date added column is in the correct datatype
+        dataframe['date_hired'] = pd.to_datetime(dataframe['date_hired'],utc=True) # ensure date added column is in the correct datatype
         success, nchunks, nrows, _ = write_pandas(conn=snowflake_conn, df=dataframe, table_name=group_logs, database='EMPLOYEE_DATA', schema='PUBLIC',auto_create_table=True)
         if st.session_state.user.groups.filter(name__in=["Human Resources"]).exists(): # confirming that user is in Human Resources group
             success_placeholder = st.empty() # add success message in placeholder
@@ -315,7 +316,7 @@ def update_db(receiver, group_logs): # update actual data table
         updated_df = pd.concat([df_toupdate,logs_df],axis=0,ignore_index=True) # append entries to original db
         updated_df.drop_duplicates(['unique_id'],keep='last',inplace=True) # drop duplicate entries
         try: # reconcile datetime formats
-            updated_df.date_hired = pd.to_datetime(updated_df.date_hired, utc=True).dt.strftime('%Y-%m-%d')
+            updated_df.date_hired = pd.to_datetime(updated_df.date_hired, utc=True)
         except: # send mail to self to reconcile dates
             subject = 'date_hired field datatype mismatch'
             contents = """You are trying to save updates to the employee attendance table, however, there is

@@ -24,9 +24,9 @@ if functions.authenticate_user(placeholder,sb_placeholder) and st.session_state.
     columns = ['full_name', 'branch', f'checkin_location{date_column}', date_comment_column, 'phone_number', 'email_address', 'att_ytd', date_column, 'unique_id', 'branch_head'] # columns required
     try:
         full_database = functions.load_data() # load full data and store in cache
-        nations_database = full_database.query(f'region == "{region}"') # select service teams within region
-        nations_db = nations_database.loc[:,columns].sort_values(['branch','full_name']) # filter to relevant columns
-        unpivot_dates_df = functions.arrange_dates(nations_database,columns,date_column,date_comment_column) # convert date columns to one column in olap format
+        branches_database = full_database.query(f'region == "{region}"') # select service teams within region
+        branches_db = branches_database.loc[:,columns].sort_values(['branch','full_name']) # filter to relevant columns
+        unpivot_dates_df = functions.arrange_dates(branches_database,columns,date_column,date_comment_column) # convert date columns to one column in olap format
     except:
         st.warning('Please select a Sunday') # if date selected is not in the columns, throw an error
         st.stop()
@@ -35,7 +35,7 @@ if functions.authenticate_user(placeholder,sb_placeholder) and st.session_state.
     if report_type=='View tables': # to view tables
         full_table, unaccounted_list, absent_list = st.tabs(['Full table', 'Unaccounted', 'Absentees']) # create tabs for table, absentee list, and unaccounted list
         with full_table: # for full table
-            interactive_table, full_modified_df = functions.edit_table(full_database, nations_db, date_column, editable_columns=[date_comment_column,'phone_number','email_address']) # create interactive table
+            interactive_table, full_modified_df = functions.edit_table(full_database, branches_db, date_column, editable_columns=[date_comment_column,'phone_number','email_address']) # create interactive table
             if full_modified_df.empty is False: # if updates are made
                 save = st.button('Save updates',help='This button saves your updates and refreshes the table') # show a save button
                 if save: # save button
@@ -45,9 +45,9 @@ if functions.authenticate_user(placeholder,sb_placeholder) and st.session_state.
                     st.cache_data.clear() # clear cache
                     st.experimental_rerun() # rerun app
         with unaccounted_list: # for unaccounted people
-            functions.filtered_people_list(nations_db, full_date, date_column, type='unaccounted', cols=['full_name','branch','phone_number']) # select unaccounted members from table
+            functions.filtered_people_list(branches_db, full_date, date_column, type='unaccounted', cols=['full_name','branch','phone_number']) # select unaccounted members from table
         with absent_list: # for absent people
-            functions.filtered_people_list(nations_db, full_date, date_column, type='absent', cols=['full_name','branch','phone_number',date_comment_column]) # select absent people from list
+            functions.filtered_people_list(branches_db, full_date, date_column, type='absent', cols=['full_name','branch','phone_number',date_comment_column]) # select absent people from list
     elif report_type=='See specific attendance report': # for attendance report
         st.header(f'Report: {full_date}') # header
         team_or_nation_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent,dataframe = functions.specific_date_summary_stats(unpivot_dates_df,attendance_date,date_column,team_or_nation='branch') # calculate summary stats; dataframe only useful for checkin
