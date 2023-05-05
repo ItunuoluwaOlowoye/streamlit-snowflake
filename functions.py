@@ -21,7 +21,9 @@ utc = pytz.UTC # for time awareness
 
 sender = 'itunu.owo@gmail.com' # mail to send emails; if this changes, don't forget to change password
 
-cnx = connect(user='Itee', password='Adenike@16', account='qgrnfkj-mj51774', 
+read_connection = st.experimental_connection('snowflake', type='sql')
+
+write_connection = connect(user='Itee', password='Itunu@snowflake23', account='qgrnfkj-mj51774', 
               database='EMPLOYEE_DATA', schema='PUBLIC', warehouse='COMPUTE_WH', role='ACCOUNTADMIN')
 
 # for bar charts
@@ -221,10 +223,7 @@ def database_intro(page_name:str): # default page elements after authentication
     return greeting,clear_cache,page_header,attendance_date,full_date,date_column,date_comment_column
 
 def load_data(sort_columns=['full_name']): # load dataset and store in cache
-    # Initialize connection.
-    conn = st.experimental_connection('snowflake', type='sql',ttl=1*60*60)
-    # Perform query.
-    df = conn.query('SELECT * from mytable;', ttl=600)
+    df = read_connection.query('SELECT * from employees', ttl=600)
     df = df.dropna(how='all') # drop null rows
     for column in list(df.columns): # fill null cells in columns that are not datetime or float
         if column != 'date_hired' and column != 'att_ytd':
@@ -289,7 +288,7 @@ def recalc_att_ytd(dataframe, today): # select sundays on or before sundays
         except: dataframe.loc[i,'att_ytd'] = 0.00
     return dataframe
 
-def save_data_updates(dataframe,credentials,date_column,group_logs): # save the updates in a log table
+def save_data_updates(dataframe,date_column,group_logs): # save the updates in a log table
     with st.spinner('Saving data...'):
         # insert log details columns
         dataframe.insert(0,'time_filled','')
@@ -298,19 +297,17 @@ def save_data_updates(dataframe,credentials,date_column,group_logs): # save the 
         dataframe['user'] = st.session_state.user.username
         dataframe[f'checkin_location{date_column}'] = st.session_state.user.last_name
         dataframe['date_hired'] = pd.to_datetime(dataframe['date_hired']) # ensure date added column is in the correct datatype
-        # Write the data from the DataFrame to the table named "employees".
-        success, nchunks, nrows, _ = write_pandas(conn=cnx, df=dataframe, table_name='employees', database='EMPLOYEE_DATA', schema='PUBLIC',auto_create_table=True)
-        pandas_gbq.to_gbq(dataframe=dataframe, destination_table=group_logs, project_id='the-new-ikeja', 
-          chunksize=None, api_method='load_csv', if_exists='append',credentials=credentials) # save data to database
+        success, nchunks, nrows, _ = write_pandas(conn=write_connection, df=dataframe, table_name=group_logs, database='EMPLOYEE_DATA', schema='PUBLIC',auto_create_table=True)
         if st.session_state.user.groups.filter(name__in=["Human Resources"]).exists(): # confirming that user is in Human Resources group
             success_placeholder = st.empty() # add success message in placeholder
             success_placeholder.success('Data saved!')
             time.sleep(1)
             success_placeholder.empty()
 
-def update_db(credentials, gs_credentials, group_logs, filepath='gs://the_new_global_db/the_new_global.csv'): # update actual data table
-    receiver = 'itunu.owo@gmail.com' # email recipient
+def update_db(receiver, gs_credentials, group_logs, filepath='gs://the_new_global_db/the_new_global.csv'): # update actual data table
+    cc = 'itunu.owo@gmail.com' # email recipient
     with st.spinner('Refreshing table..'):
+        df_toupdate = read_connection.query
         df_toupdate = pd.read_csv(filepath, storage_options={'token':'credentials.json'})
         query=f'SELECT * FROM {group_logs}'
         logs_df = pd.read_gbq(query, project_id='the-new-ikeja', credentials=credentials) # read logs
@@ -325,7 +322,7 @@ def update_db(credentials, gs_credentials, group_logs, filepath='gs://the_new_gl
             subject = 'BigQuery and Google Sheets have done it again!'
             contents = """Reconcile 'date added' field values. Probably also check 'att_ytd' field too."""
             yag = yagmail.SMTP(user=sender, password='wtvkilvlkmfawnri')
-            yag.send(to=receiver, subject=subject, contents=contents)
+            yag.send(to=receiver, cc=cc, subject=subject, contents=contents)
             pass
         updated_df.to_csv(filepath, storage_options={'token':'credentials.json'}, index=False) # save updates to original csv file
     with st.spinner('Updating Google Sheets...'):
