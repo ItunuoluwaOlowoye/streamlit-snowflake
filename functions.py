@@ -18,9 +18,10 @@ utc = pytz.UTC # for time awareness
 
 sender = 'itunu.owo@gmail.com' # mail to send emails; if this changes, don't forget to change password
 
-write_connection = connect(user='Itee', password='Itunu@snowflake23', account='qgrnfkj-mj51774', 
+snowflake_conn = connect(user='Itee', password='Itunu@snowflake23', account='qgrnfkj-mj51774', 
               database='EMPLOYEE_DATA', schema='PUBLIC', warehouse='COMPUTE_WH', role='ACCOUNTADMIN')
-
+cursor = snowflake_conn.cursor()
+    
 # for bar charts
 domain = ['Present', 'Absent', 'Unknown']
 range_ = ['#8e43e7', '#6c757d', '#6c757d']
@@ -216,8 +217,9 @@ def database_intro(page_name:str): # default page elements after authentication
     return greeting,clear_cache,page_header,attendance_date,full_date,date_column,date_comment_column
 
 def load_data(sort_columns=['full_name']): # load dataset and store in cache
-    read_connection = st.experimental_connection('snowflake', type='sql')
-    df = read_connection.query('SELECT * from employees', ttl=600)
+    query = 'SELECT * from employees'
+    cursor.execute(query)
+    df = cursor.fetch_pandas_all()
     df = df.dropna(how='all') # drop null rows
     for column in list(df.columns): # fill null cells in columns that are not datetime or float
         if column != 'date_hired' and column != 'att_ytd':
@@ -291,7 +293,7 @@ def save_data_updates(dataframe,date_column,group_logs): # save the updates in a
         dataframe['user'] = st.session_state.user.username
         dataframe[f'checkin_location{date_column}'] = st.session_state.user.last_name
         dataframe['date_hired'] = pd.to_datetime(dataframe['date_hired']) # ensure date added column is in the correct datatype
-        success, nchunks, nrows, _ = write_pandas(conn=write_connection, df=dataframe, table_name=group_logs, database='EMPLOYEE_DATA', schema='PUBLIC',auto_create_table=True)
+        success, nchunks, nrows, _ = write_pandas(conn=snowflake_conn, df=dataframe, table_name=group_logs, database='EMPLOYEE_DATA', schema='PUBLIC',auto_create_table=True)
         if st.session_state.user.groups.filter(name__in=["Human Resources"]).exists(): # confirming that user is in Human Resources group
             success_placeholder = st.empty() # add success message in placeholder
             success_placeholder.success('Data saved!')
@@ -301,10 +303,12 @@ def save_data_updates(dataframe,date_column,group_logs): # save the updates in a
 def update_db(receiver, group_logs): # update actual data table
     cc = 'itunu.owo@gmail.com' # email recipient
     with st.spinner('Refreshing table..'):
-        read_connection = st.experimental_connection('snowflake', type='sql')
-        df_toupdate = read_connection.query('SELECT * from employees', ttl=300)
-        query=f'SELECT * FROM {group_logs}'
-        logs_df = read_connection.query(query, ttl=300) # read logs
+        db_query=f'SELECT * FROM employees'
+        cursor.execute(db_query)
+        df_toupdate = cursor.fetch_pandas_all()
+        logs_query=f'SELECT * FROM {group_logs}'
+        cursor.execute(logs_query)
+        logs_df = cursor.fetch_pandas_all()
         logs_df = logs_df.sort_values('time_filled') # sort in ascending order by time of entry
         logs_df.drop(['user','time_filled'],axis=1,inplace=True) # drop user and time filled columns
         logs_df.drop_duplicates(['unique_id'],keep='last',inplace=True) # drop duplicate entries
@@ -319,7 +323,7 @@ def update_db(receiver, group_logs): # update actual data table
             yag = yagmail.SMTP(user=sender, password='wtvkilvlkmfawnri')
             yag.send(to=receiver, cc=cc, subject=subject, contents=contents)
             pass
-        success, nchunks, nrows, _ = write_pandas(conn=write_connection, df=updated_df, table_name='employees', database='EMPLOYEE_DATA', schema='PUBLIC', auto_create_table=True, overwrite=True)
+        success, nchunks, nrows, _ = write_pandas(conn=snowflake_conn, df=updated_df, table_name='employees', database='EMPLOYEE_DATA', schema='PUBLIC', auto_create_table=True, overwrite=True)
         st.success('Data updated!')
 
 def arrange_dates(dataframe, data_columns, date_column, date_comment_column): # collate all date columns to one column for analysis purposes
