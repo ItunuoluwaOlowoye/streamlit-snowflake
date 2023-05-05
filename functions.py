@@ -156,7 +156,7 @@ def get_img_with_href(local_img_path, target_url): # refernece local image and h
     return html_code
 
 def page_intro(header,body): # default page elements
-    logo = Image.open('pictures/the-new-logo.png')
+    logo = Image.open('pictures/browser-tab-logo.png')
     inset_logo = resize_image(logo,30)
     logo_column, header_column = st.columns([1,25]) # create columns for logo and header; ratio needs adjustment if layout is changed to centered
     logo_column.title('')
@@ -167,7 +167,7 @@ def page_intro(header,body): # default page elements
     with st.sidebar: # add the creed to the sidebar
         sb_placeholder = st.empty() # add to a container
         with sb_placeholder.container():
-            st.title('BuyMart Ecommerce')
+            st.title('BuyMart Ecommerce Store')
             st.markdown('''This is a fictitious ecommerce company that runs special inventorization operations on Sundays.<br>
             There is a shift roster for every member of staff, however, attendance is not compulsory as long as someone can cover your shift.<br>
             There is a special bonus given at the end of the year based on your percentage attendance throughout the year.<br>
@@ -343,7 +343,7 @@ def presentcalc(dataframe): # calculate people present
         present_attendance, present_attendance_percent = 0, 0.0
     return total_attendance, present_attendance, present_attendance_percent
 
-def specific_date_summary_stats(dataframe,attendance_date,date_column,team_or_nation='dept'): # calculate summary statistics for a specific date, you can group by team or branch
+def specific_date_summary_stats(dataframe,attendance_date,team_or_nation='dept'): # calculate summary statistics for a specific date, you can group by team or branch
     dataframe['date'] = pd.to_datetime(dataframe['date'], format='_%d_%b_%y').dt.strftime('%Y-%m-%d') # put date column in corect format
     dataframe['att_ytd'] = dataframe['att_ytd'].replace(np.nan,0) # let all attendance percent values be numeric
     selected_day_df=dataframe[dataframe['date']==str(attendance_date)] # select data from the specified date
@@ -355,12 +355,7 @@ def specific_date_summary_stats(dataframe,attendance_date,date_column,team_or_na
     last_week_df=dataframe[dataframe['date']==str(last_week)].reset_index() # select data one week from the selected day
     todays_total_attendance, todays_present_attendance, todays_present_attendance_percent = presentcalc(selected_day_df) # calculate attendance of the selected day
     last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent = presentcalc(last_week_df) # calculate attendance of the week before selected day
-    if st.session_state.user.groups.filter(name__in=["Human Resources"]).exists(): # confirming that user is in Human Resources group
-        try: # select present by Hr
-            dataframe = dataframe[dataframe[f'checkin_location{date_column}'].str.startswith('HR') &
-                              (dataframe['attendance'] == 'Present')]
-        except: pass
-    return team_or_nation_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent,dataframe
+    return team_or_nation_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent
 
 def specific_date_dashboard(full_date, team_or_nation_numbers, total_members, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_full_date, last_week_present_attendance, head_type='total'): # create a dashboard of the summary statistics
     delta = int(todays_present_attendance-last_week_present_attendance) # calculate difference between specified date and week before attendance
