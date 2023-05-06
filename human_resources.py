@@ -14,7 +14,7 @@ st.set_page_config(page_title='BuyMart Human Resources Portal', page_icon=browse
 
 placeholder = st.empty() # create a main content placeholder
 with placeholder.container(): # create a container within the placeholder
-    sb_placeholder = functions.page_intro('Human Resources Portal',f"This portal is only accessible to HR (human resources) staff. This is where attendance for Sunday operations is logged by HR. You can find the list of usernames and passwords [here](https://docs.google.com/spreadsheets/d/1xLFmSlsziJEqIaiyN-1XO5Ew2UhZCV0x4D9_TKm9uuk/edit?usp=sharing)") # write the default page elements and store sidebar placeholder in a variable
+    sb_placeholder = functions.page_intro('Human Resources Portal',f"This portal is only accessible to HR (human resources) staff. This is where attendance for Sunday operations is logged by HR. You can find the list of usernames and passwords [here](https://docs.google.com/spreadsheets/d/1xLFmSlsziJEqIaiyN-1XO5Ew2UhZCV0x4D9_TKm9uuk/edit#gid=0)") # write the default page elements and store sidebar placeholder in a variable
     
 if functions.authenticate_user(placeholder,sb_placeholder):
     if st.session_state.user.groups.filter(name__in=["Human Resources"]).exists(): # after authentication and confirming that user is in hr group
