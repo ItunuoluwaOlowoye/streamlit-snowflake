@@ -5,7 +5,7 @@ from functions import page_intro, get_img_with_href # collection of user defined
 
 st.set_page_config(page_title='BuyMart Branches Data Management', page_icon=Image.open('pictures/browser-tab-logo.png'), layout='wide') # set the page layout
 
-page_intro('BuyMart Branches Data Management Studio','Welcome to the BuyMart branchesdata management studio. Please select your group below.')
+page_intro('BuyMart Branches Data Management Studio','Welcome to the BuyMart branches data management studio. Please select your group below.')
 
 stack1, stack2, stack3 = st.columns([1.2,1,1.2]) # stack of different groups
 
