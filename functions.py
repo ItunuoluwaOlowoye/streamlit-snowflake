@@ -230,6 +230,7 @@ def load_data(sort_columns=['full_name']): # load dataset and store in cache
     return df
 
 def edit_table(full_db, dataframe, date_column, editable_columns:list): # edit interactive table
+    st.write('Click on the Mark purple button in the table below to mark attendance.',)
     # configure settings for the interactive table
     options_builder = GridOptionsBuilder.from_dataframe(dataframe)
     options_builder.configure_default_column(sortable=False)
@@ -471,7 +472,7 @@ def timeseries_trends(dataframe, columns, facet_by='region',tab_name='team'): # 
         mean_column.write(f'You have {len(individual_att_ytd)} people to account for.') # write how many people to account for
         mean_column.metric('Average attendance', value=mean_att, help='Average attendance over the selected timeframe') # write mean metric
         with trend_column: # create line chart
-            chart = alt.Chart(filtered_linechart_data).mark_line(color='#8e43e7')\
+            chart = alt.Chart(filtered_linechart_data).mark_circle(color='#8e43e7')\
             .encode(x=alt.X('date:T', axis=alt.Axis(title=None)),
                     y=alt.Y('full_name', axis=alt.Axis(title='Attendees')),
                     tooltip=['date:T', 'full_name'])
@@ -483,7 +484,7 @@ def timeseries_trends(dataframe, columns, facet_by='region',tab_name='team'): # 
             faceted_linechart_data = faceted_linechart_data.replace(np.nan,0).reset_index()
             faceted_linechart_data = pd.melt(faceted_linechart_data, id_vars=[facet_by], var_name='date', value_name='full_name')
             title = str(facet_by).replace('_',' ').title()
-            chart = (alt.Chart(faceted_linechart_data).mark_line(color='#8e43e7')
+            chart = (alt.Chart(faceted_linechart_data).mark_circle(color='#8e43e7')
                      .encode(x=alt.X('date:T', axis=alt.Axis(title=None)), 
                              y=alt.Y('full_name', axis=alt.Axis(title='Attendees')), 
                              tooltip=['date:T', 'full_name'], facet=alt.Facet(facet_by, columns=3, title=title))
@@ -514,3 +515,4 @@ def wrong_portal():
     st.info('''You have access to the BuyMart database, however, you seem to have accessed a portal that you do not have access to. Please redirect to the correct portal for your level/role. Thank you.
     The page url is written in the format, **https://buy-mart-<portal-name>-streamlit.app**.
     Are you on the right portal?''')
+
