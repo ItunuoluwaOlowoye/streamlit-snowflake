@@ -22,7 +22,7 @@ if functions.authenticate_user(placeholder,sb_placeholder) and st.session_state.
     branch = branch_manager.split('_')[0] # store branch name in a variable
     region = branch_manager.split('_')[2] # store region in a variable
     greeting,clear_cache,page_header,attendance_date,full_date,date_column,date_comment_column = functions.database_intro(f'{branch_manager} Database') # default page entries
-    columns = ['full_name', 'branch_head', f'checkin_location{date_column}', date_comment_column, 'phone_number', 'email_address', 'att_ytd', date_column, 'unique_id', 'branch'] # columns required
+    columns = ['full_name', date_comment_column, 'phone_number', 'email_address', 'att_ytd', date_column, f'checkin_location{date_column}', 'unique_id', 'branch', 'branch_head'] # columns required
     try:
         full_database = functions.load_data() # load data and store in cache
         branch_database = full_database.query(f'region == "{region}" & branch == "{branch}"') # filter to service team data
