@@ -52,9 +52,9 @@ if functions.authenticate_user(placeholder,sb_placeholder):
         elif report_type=='See specific attendance report': # for attendance report
             st.header(f'Report: {full_date}') # header
             dept_or_branch_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent = functions.specific_date_summary_stats(unpivot_dates_df,attendance_date,dept_or_branch='dept') # calculate summary stats; dataframe only useful for checkin
-            functions.specific_date_dashboard(full_date, dept_or_branch_numbers, total_members, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_full_date, last_week_present_attendance, head_type='team') # create dashboard
+            functions.specific_date_dashboard(full_date, dept_or_branch_numbers, total_members, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_full_date, last_week_present_attendance, head_type='dept') # create dashboard
             functions.bar_facets(unpivot_dates_df,attendance_date,full_date,facet_by='dept',number_of_facets=3) # show stats grouped by service team
         else: # for trends
-            dashboard_tab,dedicated_tab,inprogress_tab,icu_tab = functions.timeseries_trends(unpivot_dates_df, columns, facet_by='dept',tab_name='team') # show timeseries trends
+            dashboard_tab,dedicated_tab,inprogress_tab,icu_tab = functions.timeseries_trends(unpivot_dates_df, columns, facet_by='dept',tab_name='dept') # show timeseries trends
     else:
         functions.wrong_portal()        

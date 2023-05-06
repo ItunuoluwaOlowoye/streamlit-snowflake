@@ -53,9 +53,9 @@ if functions.authenticate_user(placeholder,sb_placeholder):
                 functions.filtered_people_list(branch_db, full_date, date_column, type='absent', cols=['full_name','phone_number','branch_head']) # list people who have been marked absent
         elif report_type=='See specific attendance report':
             st.header(f'Report: {full_date}')
-            dept_or_branch_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent = functions.specific_date_summary_stats(unpivot_dates_df,attendance_date,dept_or_branch='branch_head') # calculate summary stats
+            dept_or_branch_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent = functions.specific_date_summary_stats(unpivot_dates_df,attendance_date,dept_or_branch=None) # calculate summary stats
             functions.specific_date_dashboard(full_date, dept_or_branch_numbers, total_members, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_full_date, last_week_present_attendance) # create dashboard
         else:
-            dashboard_tab,dedicated_tab,inprogress_tab,icu_tab = functions.timeseries_trends(unpivot_dates_df, columns, facet_by='full_name',tab_name='branch') # create time series trends
+            dashboard_tab,dedicated_tab,inprogress_tab,icu_tab = functions.timeseries_trends(unpivot_dates_df, columns, facet_by='full_name',tab_name='team') # create time series trends
     else:
         functions.wrong_portal()
