@@ -230,7 +230,7 @@ def load_data(sort_columns=['full_name']): # load dataset and store in cache
     return df
 
 def edit_table(full_db, dataframe, date_column, editable_columns:list): # edit interactive table
-    st.write('Click on the purple Mark button in the table below to mark attendance.',)
+    st.markdown(f'Click on the <font style="color:#8e43e7">purple Mark button</font> in the table below to mark attendance.',unsafe_allow_html=True)
     # configure settings for the interactive table
     options_builder = GridOptionsBuilder.from_dataframe(dataframe)
     options_builder.configure_default_column(sortable=False)
