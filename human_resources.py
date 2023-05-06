@@ -40,7 +40,7 @@ if functions.authenticate_user(placeholder,sb_placeholder):
             functions.recalc_att_ytd(full_modified_df,today) # recalculate att for updates
             if full_modified_df.empty is False: # if updates exist
                 functions.save_data_updates(full_modified_df,date_column,group_logs=f'HR_{checkin_location}') # append to snowflake db
-            st.write('Please refresh the table at the end of your session to view updates')
+            st.write('The data is saved in a temporary table. Please refresh the table at the end of your session to update the main table')
             refresh = st.button('Refresh table') # include button to refresh original db
             if refresh:
                 functions.update_db(group_logs=f'HR_{checkin_location}') # refresh original db with updates and also connected Google Sheet
