@@ -20,7 +20,7 @@ if functions.authenticate_user(placeholder,sb_placeholder):
     if st.session_state.user.groups.filter(name__in=["Department Managers"]).exists(): # after authentication and confirming that user is a service dept head
         today = date.today() # today's date
         dept_manager = (st.session_state.user.last_name).replace(' ','_')
-        region = dept_manager.split('_')[1] # store region in a variable
+        region = dept_manager.split('_')[2] # store region in a variable
         dept = dept_manager.split('_')[0] # store dept name in a variable
         greeting,clear_cache,page_header,attendance_date,full_date,date_column,date_comment_column = functions.database_intro(f'{dept_manager} Database') # default page entries
         columns = ['full_name', date_comment_column, 'phone_number', 'email_address', 'att_ytd', date_column, f'checkin_location{date_column}', 'unique_id', 'dept'] # columns required
