@@ -27,7 +27,7 @@ if functions.authenticate_user(placeholder,sb_placeholder):
             checkin_df = full_database.loc[:,columns] # select only needed columns
             columns.append(f'checkin_location{date_column}') # include hr location column
             unpivot_dates_df = functions.arrange_dates(full_database,columns,date_column,date_comment_column) # convert date columns to one column in olap format
-            team_or_nation_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent = functions.specific_date_summary_stats(unpivot_dates_df,attendance_date,team_or_nation=None) # calculate summary stats
+            dept_or_branch_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent = functions.specific_date_summary_stats(unpivot_dates_df,attendance_date,dept_or_branch=None) # calculate summary stats
         except:
             st.warning('Please select a Sunday') # if date selected is not in the columns, throw an error
             st.stop() # stop execution until error is fixed
@@ -48,7 +48,7 @@ if functions.authenticate_user(placeholder,sb_placeholder):
                 st.experimental_rerun() # rerun app to get latest updates
         elif report_type=='See specific attendance report': # for attendance report
             st.header(f'Report: {full_date}')
-            functions.specific_date_dashboard(full_date, team_or_nation_numbers, total_members, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_full_date, last_week_present_attendance) # create dashboard
+            functions.specific_date_dashboard(full_date, dept_or_branch_numbers, total_members, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_full_date, last_week_present_attendance) # create dashboard
             functions.bar_facets(unpivot_dates_df,attendance_date,full_date,facet_by=f'checkin_location{date_column}',number_of_facets=3) # show stats grouped by hr location
             functions.bar_facets(unpivot_dates_df,attendance_date,full_date,facet_by='region',number_of_facets=3) # show stats grouped by region
         else: # create time series trends

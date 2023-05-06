@@ -325,6 +325,7 @@ def update_db(group_logs, receiver='itunu.owo@gmail.com'): # update actual data 
             yag = yagmail.SMTP(user=sender, password='wtvkilvlkmfawnri')
             yag.send(to=receiver, subject=subject, contents=contents)
             st.warning(contents)
+            time.sleep(5)
             pass
         success, nchunks, nrows, _ = write_pandas(conn=snowflake_conn, df=updated_df, table_name='employees', database='EMPLOYEE_DATA', schema='PUBLIC', auto_create_table=True, overwrite=True)
         st.success('Data updated!')
@@ -350,30 +351,30 @@ def presentcalc(dataframe): # calculate people present
         present_attendance, present_attendance_percent = 0, 0.0
     return total_attendance, present_attendance, present_attendance_percent
 
-def specific_date_summary_stats(dataframe,attendance_date,team_or_nation='dept'): # calculate summary statistics for a specific date, you can group by team or branch
+def specific_date_summary_stats(dataframe,attendance_date,dept_or_branch='dept'): # calculate summary statistics for a specific date, you can group by team or branch
     dataframe['date'] = pd.to_datetime(dataframe['date'], format='_%d_%b_%y').dt.strftime('%Y-%m-%d') # put date column in corect format
     dataframe['att_ytd'] = dataframe['att_ytd'].replace(np.nan,0) # let all attendance percent values be numeric
     selected_day_df=dataframe[dataframe['date']==str(attendance_date)] # select data from the specified date
-    if team_or_nation is None: team_or_nation_numbers = pd.DataFrame() # empty dataframe if not grouped by team or branch
-    else: team_or_nation_numbers = selected_day_df[team_or_nation].value_counts().to_frame() # count of team or branch
+    if dept_or_branch is None: dept_or_branch_numbers = pd.DataFrame() # empty dataframe if not grouped by team or branch
+    else: dept_or_branch_numbers = selected_day_df[dept_or_branch].value_counts().to_frame() # count of team or branch
     total_members = selected_day_df['full_name'].count() # total number of people in selected day
     last_week=attendance_date-timedelta(days=7) # check last week
     last_week_full_date = last_week.strftime('%A, %d %B %Y').strip() # write date in full for dashboard
     last_week_df=dataframe[dataframe['date']==str(last_week)].reset_index() # select data one week from the selected day
     todays_total_attendance, todays_present_attendance, todays_present_attendance_percent = presentcalc(selected_day_df) # calculate attendance of the selected day
     last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent = presentcalc(last_week_df) # calculate attendance of the week before selected day
-    return team_or_nation_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent
+    return dept_or_branch_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent
 
-def specific_date_dashboard(full_date, team_or_nation_numbers, total_members, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_full_date, last_week_present_attendance, head_type='total'): # create a dashboard of the summary statistics
+def specific_date_dashboard(full_date, dept_or_branch_numbers, total_members, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_full_date, last_week_present_attendance, head_type='total'): # create a dashboard of the summary statistics
     delta = int(todays_present_attendance-last_week_present_attendance) # calculate difference between specified date and week before attendance
     abs_delta = abs(delta) # store absolute value of difference
     relativity = '' # initialize a variable to store comparisons
     if todays_present_attendance_percent >= 70: st.balloons(); message = 'Congratulations!' # add congratulatory message if attendance is more than 70 percent
     else: message=''
-    if team_or_nation_numbers.empty: pass
+    if dept_or_branch_numbers.empty: pass
     else: 
         numbers_expander=st.expander(f'Are the {head_type}s under/over staffed or optimal?') # check numbers per group
-        numbers_expander.dataframe(team_or_nation_numbers)   
+        numbers_expander.dataframe(dept_or_branch_numbers)   
     scorecard_column, tablechart_column, percent_columns = st.columns([1,1.25,1]) # create three different columns for dashboard
     # create scorecard chart
     scorecard_column.metric(label=f'Your {head_type} in Sunday operations today', value=todays_present_attendance,
