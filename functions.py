@@ -301,8 +301,7 @@ def save_data_updates(dataframe,date_column,group_logs): # save the updates in a
             time.sleep(1)
             success_placeholder.empty()
 
-def update_db(receiver, group_logs): # update actual data table
-    cc = 'itunu.owo@gmail.com' # email recipient
+def update_db(group_logs, receiver='itunu.owo@gmail.com'): # update actual data table
     with st.spinner('Refreshing table..'):
         db_query=f'SELECT * FROM "employees"'
         cursor.execute(db_query)
@@ -320,9 +319,11 @@ def update_db(receiver, group_logs): # update actual data table
         except: # send mail to self to reconcile dates
             subject = 'date_hired field datatype mismatch'
             contents = """You are trying to save updates to the employee attendance table, however, there is
-            a mismatch in the original datatype of the date_hired field and the datatype of your update."""
+            a mismatch in the original datatype of the date_hired field and the datatype of your update. This error has been sent
+            to the developer and will be fixed as soon as possible."""
             yag = yagmail.SMTP(user=sender, password='wtvkilvlkmfawnri')
-            yag.send(to=receiver, cc=cc, subject=subject, contents=contents)
+            yag.send(to=receiver, subject=subject, contents=contents)
+            st.warning(contents)
             pass
         success, nchunks, nrows, _ = write_pandas(conn=snowflake_conn, df=updated_df, table_name='employees', database='EMPLOYEE_DATA', schema='PUBLIC', auto_create_table=True, overwrite=True)
         st.success('Data updated!')
