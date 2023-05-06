@@ -58,5 +58,4 @@ if functions.authenticate_user(placeholder,sb_placeholder):
         else:
             dashboard_tab,dedicated_tab,inprogress_tab,icu_tab = functions.timeseries_trends(unpivot_dates_df, columns, facet_by='full_name',tab_name='branch') # create time series trends
     else:
-        st.warning('You have access to the BuyMart database, however, you seem to have accessed a portal that you do not have access to. Please redirect to the correct portal for your level/role. Thank you')    
-
+        functions.wrong_portal()

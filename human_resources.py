@@ -55,4 +55,4 @@ if functions.authenticate_user(placeholder,sb_placeholder):
             dashboard_tab,dedicated_tab,inprogress_tab,icu_tab = functions.timeseries_trends(unpivot_dates_df, columns, facet_by='region',tab_name='attendees')
         st.stop()
     else:
-        st.warning('You have access to the BuyMart database, however, you seem to have accessed a portal that you do not have access to. Please redirect to the correct portal for your level/role. Thank you')
+        functions.wrong_portal()

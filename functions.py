@@ -509,3 +509,8 @@ def timeseries_trends(dataframe, columns, facet_by='region',tab_name='team'): # 
         attendance_count = poor_attendance[facet_by].value_counts().to_frame().reset_index().rename(columns={'index':f'{facet_by}', f'{facet_by}':'count'})
         st.dataframe(attendance_count)
     return dashboard_tab,dedicated_tab,inprogress_tab,icu_tab
+
+def wrong_portal():
+    st.info('''You have access to the BuyMart database, however, you seem to have accessed a portal that you do not have access to. Please redirect to the correct portal for your level/role. Thank you.
+    The page url is written in the format, **https://buy-mart-<portal-name>-streamlit.app**.
+    Are you on the right portal?''')
