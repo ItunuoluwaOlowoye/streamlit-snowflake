@@ -50,8 +50,8 @@ if functions.authenticate_user(placeholder,sb_placeholder) and st.session_state.
             functions.filtered_people_list(branches_db, full_date, date_column, type='absent', cols=['full_name','branch','phone_number',date_comment_column]) # select absent people from list
     elif report_type=='See specific attendance report': # for attendance report
         st.header(f'Report: {full_date}') # header
-        team_or_nation_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent,dataframe = functions.specific_date_summary_stats(unpivot_dates_df,attendance_date,date_column,team_or_nation='branch') # calculate summary stats; dataframe only useful for checkin
-        functions.specific_date_dashboard(full_date, team_or_nation_numbers, total_members, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_full_date, last_week_present_attendance, head_type='branch') # create dashboard
+        dept_or_branch_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent = functions.specific_date_summary_stats(unpivot_dates_df,attendance_date,date_column,dept_or_branch='branch') # calculate summary stats; dataframe only useful for checkin
+        functions.specific_date_dashboard(full_date, dept_or_branch_numbers, total_members, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_full_date, last_week_present_attendance, head_type='branch') # create dashboard
         functions.bar_facets(unpivot_dates_df,attendance_date,full_date,facet_by='branch',number_of_facets=3) # show stats grouped by service team
     else: # for trends
         dashboard_tab,dedicated_tab,inprogress_tab,icu_tab = functions.timeseries_trends(unpivot_dates_df, columns, facet_by='branch',tab_name='branch') # show timeseries trends

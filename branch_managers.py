@@ -43,7 +43,6 @@ if functions.authenticate_user(placeholder,sb_placeholder) and st.session_state.
                 if save: # to save
                     functions.recalc_att_ytd(full_modified_df,today) # recalculate attendance percentage for updates
                     functions.save_data_updates(full_modified_df,date_column,group_logs=f'{branch_manager}') # save updates
-                    receiver = st.text_input("What's your actual email address? This data will be deleted after your session.")
                     functions.update_db(group_logs=f'{branch_manager}') # update table
                     st.cache_data.clear() # clear cache
                     st.experimental_rerun() # rerun app
@@ -53,8 +52,8 @@ if functions.authenticate_user(placeholder,sb_placeholder) and st.session_state.
             functions.filtered_people_list(branch_db, full_date, date_column, type='absent', cols=['full_name','phone_number','branch_head']) # list people who have been marked absent
     elif report_type=='See specific attendance report':
         st.header(f'Report: {full_date}')
-        team_or_nation_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent = functions.specific_date_summary_stats(unpivot_dates_df,attendance_date,team_or_nation='branch_head') # calculate summary stats
-        functions.specific_date_dashboard(full_date, team_or_nation_numbers, total_members, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_full_date, last_week_present_attendance) # create dashboard
+        dept_or_branch_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent = functions.specific_date_summary_stats(unpivot_dates_df,attendance_date,dept_or_branch='branch_head') # calculate summary stats
+        functions.specific_date_dashboard(full_date, dept_or_branch_numbers, total_members, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_full_date, last_week_present_attendance) # create dashboard
         functions.bar_facets(unpivot_dates_df,attendance_date,full_date,facet_by='branch_head',number_of_facets=3) # show stats grouped by service team
     else:
         dashboard_tab,dedicated_tab,inprogress_tab,icu_tab = functions.timeseries_trends(unpivot_dates_df, columns, facet_by='branch_head',tab_name='branch') # create time series trends
