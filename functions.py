@@ -185,16 +185,16 @@ def password_entered(): # storing session usernames and passwords
     else:
         st.session_state['password_correct'] = False # don't initialize storing session password
 
-def authenticate_user(placeholder, sb_placeholder): # authenticate users with Django
+def authenticate_user(placeholder, sb_placeholder, user_key='username', password_key='password'): # authenticate users with Django
     if 'password_correct' not in st.session_state: # first run, session password not initialized
-        st.text_input('Username (this is case sensitive)', on_change=password_entered, key='username')
-        st.text_input('Password', type='password', on_change=password_entered, key='password') # show inputs for username + password.
+        st.text_input('Username (this is case sensitive)', on_change=password_entered, key=user_key)
+        st.text_input('Password', type='password', on_change=password_entered, key=password_key) # show inputs for username + password.
         login = st.button('Log in') # add log in button
         if login: return False # don't log in, instead save the session user credentials
         
     elif not st.session_state['password_correct']: # Password not correct, show input + error.
-        st.text_input('Username (this is case sensitive)', on_change=password_entered, key='username')
-        st.text_input('Password', type='password', on_change=password_entered, key='password') # show inputs for username + password.
+        st.text_input('Username (this is case sensitive)', on_change=password_entered, key=user_key)
+        st.text_input('Password', type='password', on_change=password_entered, key=password_key) # show inputs for username + password.
         login = st.button('Log in') # add log in button
         if login:
             st.error('❗ User not known or password incorrect')
