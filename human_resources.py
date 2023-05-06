@@ -20,7 +20,6 @@ if functions.authenticate_user(placeholder,sb_placeholder):
     if st.session_state.user.groups.filter(name__in=["Human Resources"]).exists(): # after authentication and confirming that user is in hr group
         today = date.today() # today's date
         checkin_location = (st.session_state.user.last_name).split()[-1] # store hr location in a variable
-        st.write(checkin_location)
         greeting,clear_cache,page_header,attendance_date,full_date,date_column,date_comment_column = functions.database_intro('HR Database') # default page entries
         columns = ['full_name','region','email_address','phone_number','att_ytd',date_column,date_comment_column,'unique_id'] # columns needed
         try:
