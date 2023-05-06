@@ -44,7 +44,7 @@ if functions.authenticate_user(placeholder,sb_placeholder) and st.session_state.
                     functions.recalc_att_ytd(full_modified_df,today) # recalculate attendance percentage for updates
                     functions.save_data_updates(full_modified_df,date_column,group_logs=f'{branch_manager}') # save updates
                     receiver = st.text_input("What's your actual email address? This data will be deleted after your session.")
-                    functions.update_db(receiver=receiver,group_logs=f'{branch_manager}') # update table
+                    functions.update_db(group_logs=f'{branch_manager}') # update table
                     st.cache_data.clear() # clear cache
                     st.experimental_rerun() # rerun app
         with unaccounted_list:

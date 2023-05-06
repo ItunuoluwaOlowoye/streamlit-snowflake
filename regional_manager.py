@@ -41,7 +41,7 @@ if functions.authenticate_user(placeholder,sb_placeholder) and st.session_state.
                 if save: # save button
                     functions.recalc_att_ytd(full_modified_df,today) # recalculate attendance percentage
                     functions.save_data_updates(full_modified_df,date_column,group_logs=f'{regional_manager}') # save to snowflake table
-                    functions.update_db(credentials,gs_credentials,group_logs=f'logs.{regional_manager}') # update original db
+                    functions.update_db(group_logs=f'{regional_manager}') # update original db
                     st.cache_data.clear() # clear cache
                     st.experimental_rerun() # rerun app
         with unaccounted_list: # for unaccounted people

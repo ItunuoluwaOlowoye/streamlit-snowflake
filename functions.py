@@ -287,6 +287,7 @@ def recalc_att_ytd(dataframe, today): # select sundays on or before sundays
 
 def save_data_updates(dataframe,date_column,group_logs): # save the updates in a log table
     with st.spinner('Saving data...'):
+        time.sleep(1.5)
         # insert log details columns
         dataframe.insert(0,'time_filled','')
         dataframe.insert(0,'user','')
