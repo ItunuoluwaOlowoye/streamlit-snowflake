@@ -222,6 +222,10 @@ def load_data(sort_columns=['full_name']): # load dataset and store in cache
     query = 'SELECT * from "employees"'
     cursor.execute(query)
     df = cursor.fetch_pandas_all()
+    success_placeholder = st.empty() # add success message in placeholder
+    success_placeholder.success('Connection to Snowflake database successful!')
+    time.sleep(1)
+    success_placeholder.empty()
     df = df.dropna(how='all') # drop null rows
     for column in list(df.columns): # fill null cells in columns that are not datetime or float
         if column != 'date_hired' and column != 'att_ytd':

@@ -31,7 +31,7 @@ if functions.authenticate_user(placeholder,sb_placeholder):
             branch_db = branch_database.loc[:,columns] # select relevant columns
             unpivot_dates_df = functions.arrange_dates(branch_database,columns,date_column,date_comment_column) # convert date columns to one column in olap format
         except: # when date column is not in db, throw an exception
-            st.warning('Please select a Sunday')
+            st.warning('Please select a Sunday'); st.stop()
         with st.sidebar: # add a sidebar
             report_type = st.selectbox('What will you like to do?',options=['View tables','See specific attendance report','See attendance trend'])
         if report_type=='View tables': # for tables
