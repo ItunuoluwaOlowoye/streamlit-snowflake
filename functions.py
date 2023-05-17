@@ -24,7 +24,7 @@ snowflake_conn = connect(user='Itee', password='Itunu@snowflake23', account='qgr
 cursor = snowflake_conn.cursor()
     
 # for bar charts
-domain = ['Present', 'Absent', 'Unknown']
+domain = ['Completed', 'incomplete', 'Unknown']
 range_ = ['#8e43e7', '#6c757d', '#6c757d']
 
 # interactive button to mark attendance
@@ -63,14 +63,14 @@ class BtnCellRenderer {
     }
 
     btnClickedHandler(event) {
-        if(this.params.getValue() == 'Absent') {
+        if(this.params.getValue() == 'incomplete') {
             this.refreshTable('');
             }
-        else if(this.params.getValue() == 'Present') {
-            this.refreshTable('Absent');
+        else if(this.params.getValue() == 'Completed') {
+            this.refreshTable('incomplete');
             }
         else {
-            this.refreshTable('Present');
+            this.refreshTable('Completed');
             }
             console.log(this.params);
             console.log(this.params.getValue());
@@ -118,11 +118,11 @@ class BtnCellRenderer {
     }
 
     btnClickedHandler(event) {
-        if(this.params.getValue() == 'Present') {
+        if(this.params.getValue() == 'Completed') {
             this.refreshTable('');
             }
         else {
-            this.refreshTable('Present');
+            this.refreshTable('Completed');
             }
             console.log(this.params);
             console.log(this.params.getValue());
@@ -278,7 +278,7 @@ def recalc_att_ytd(dataframe, today): # select sundays on or before sundays
     for i in dataframe.index: # for every person in the table
         date_hired = dataframe.loc[i,'date_hired'] # select date added
         dates_available = [] # create list to store all dates in the table that are after when the user was added to the table and are on or before today
-        for date in date_list_column: # for every date present in the original table
+        for date in date_list_column: # for every date Completed in the original table
             if date >= date_hired and date <= pd.to_datetime(today): # check if the date is on or after the user was added and on or before today
                 column_name = date.strftime('_%d_%b_%y')
                 dates_available.append(column_name) # store that date into a list
@@ -286,7 +286,7 @@ def recalc_att_ytd(dataframe, today): # select sundays on or before sundays
         sundays_by_today.fillna('',inplace=True)
         all_count = sundays_by_today.count() # count total days
         try:
-            present_count = sundays_by_today.value_counts()['Present'] # count days present
+            present_count = sundays_by_today.value_counts()['Completed'] # count days Completed
             dataframe.loc[i,'att_ytd'] = round((present_count/all_count*100),2) # recalculate att_ytd
         except: dataframe.loc[i,'att_ytd'] = 0.00
     return dataframe
@@ -299,7 +299,7 @@ def save_data_updates(dataframe,date_column,group_logs): # save the updates in a
         dataframe.insert(0,'user','')
         dataframe['time_filled'] = datetime.now(dt.timezone.utc)
         dataframe['user'] = st.session_state.user.username
-        dataframe[f'checkin_location{date_column}'] = st.session_state.user.last_name
+        dataframe[f'input_location{date_column}'] = st.session_state.user.last_name
         dataframe['date_hired'] = pd.to_datetime(dataframe['date_hired'],utc=True) # ensure date added column is in the correct datatype
         success, nchunks, nrows, _ = write_pandas(conn=snowflake_conn, df=dataframe, table_name=group_logs, database='EMPLOYEE_DATA', schema='PUBLIC',auto_create_table=True)
         if st.session_state.user.groups.filter(name__in=["Human Resources"]).exists(): # confirming that user is in Human Resources group
@@ -345,15 +345,15 @@ def arrange_dates(dataframe, data_columns, date_column, date_comment_column): # 
     unpivot_df = dataframe.loc[:,needed_columns] # select only the columns stored from the full database
     unpivot_df = pd.melt(unpivot_df, id_vars=data_columns, var_name='date', value_name='attendance') # create dataframe with dates in one column for analysis
     unpivot_df['attendance'] = unpivot_df['attendance'].replace('','Unknown')
-    unpivot_df[f'checkin_location{date_column}'] = unpivot_df[f'checkin_location{date_column}'].replace('',np.nan)
+    unpivot_df[f'input_location{date_column}'] = unpivot_df[f'input_location{date_column}'].replace('',np.nan)
     return unpivot_df
 
-def presentcalc(dataframe): # calculate people present
+def presentcalc(dataframe): # calculate tasks Completed
     total_attendance = dataframe['attendance'].value_counts() # count total attendance
-    if 'Present' in dataframe['attendance'].unique(): # if there are people present
-        present_attendance = dataframe['attendance'].value_counts()['Present'] # count people present
-        present_attendance_percent = round((dataframe['attendance'].value_counts(normalize=True)['Present']*100),2) # calculate % of people present
-    else: # people present is zero
+    if 'Completed' in dataframe['attendance'].unique(): # if there are tasks Completed
+        present_attendance = dataframe['attendance'].value_counts()['Completed'] # count tasks Completed
+        present_attendance_percent = round((dataframe['attendance'].value_counts(normalize=True)['Completed']*100),2) # calculate % of tasks Completed
+    else: # tasks Completed is zero
         present_attendance, present_attendance_percent = 0, 0.0
     return total_attendance, present_attendance, present_attendance_percent
 
@@ -363,7 +363,7 @@ def specific_date_summary_stats(dataframe,attendance_date,dept_or_branch='dept')
     selected_day_df=dataframe[dataframe['date']==str(attendance_date)] # select data from the specified date
     if dept_or_branch is None: dept_or_branch_numbers = pd.DataFrame() # empty dataframe if not grouped by team or branch
     else: dept_or_branch_numbers = selected_day_df[dept_or_branch].value_counts().to_frame() # count of team or branch
-    total_members = selected_day_df['full_name'].count() # total number of people in selected day
+    total_members = selected_day_df['full_name'].count() # total number of tasks in selected day
     last_week=attendance_date-timedelta(days=7) # check last week
     last_week_full_date = last_week.strftime('%A, %d %B %Y').strip() # write date in full for dashboard
     last_week_df=dataframe[dataframe['date']==str(last_week)].reset_index() # select data one week from the selected day
@@ -383,7 +383,7 @@ def specific_date_dashboard(full_date, dept_or_branch_numbers, total_members, to
         numbers_expander.dataframe(dept_or_branch_numbers)   
     scorecard_column, tablechart_column, percent_columns = st.columns([1,1.25,1]) # create three different columns for dashboard
     # create scorecard chart
-    scorecard_column.metric(label=f'Your {head_type} in Sunday operations today', value=todays_present_attendance,
+    scorecard_column.metric(label=f'Your {head_type} in Weekly Report today', value=todays_present_attendance,
     delta=delta, help='Compare attendance with last week. The smaller-sized number below shows by how much attendance increased (green) or decreased (red) compared to last week.')
     # create expander for bar chart
     chart_expander=tablechart_column.expander("See attendance chart:")
@@ -403,7 +403,7 @@ def specific_date_dashboard(full_date, dept_or_branch_numbers, total_members, to
         st.dataframe(todays_total_attendance) # show table
     # write percentage attendance
     percent_columns.markdown(f'''{message} <font style="color:#8e43e7;font-size:20px;"><strong>{todays_present_attendance_percent}%</strong></font>   of your {head_type} members were in 
-    Sunday operations today.''', unsafe_allow_html=True)
+    Weekly Report today.''', unsafe_allow_html=True)
     # create summary paragraph
     st.markdown(f'''###### Summary Paragraph:''')
     if delta>0: # specified date attendance more than last week attendance
@@ -413,7 +413,7 @@ def specific_date_dashboard(full_date, dept_or_branch_numbers, total_members, to
     else: # specified date attendance and previous week attendance are the same
         abs_delta=''; relativity = 'the same as'; color=':white'
     st.markdown(f'''In summary, you have **{total_members}** {head_type} members. 
-    <font style="color:#8e43e7">{todays_present_attendance}</font> of them came to Sunday operations today and this is {abs_delta} {color}[{relativity} last week] {last_week_full_date}.
+    <font style="color:#8e43e7">{todays_present_attendance}</font> of them completed their tasks in Weekly Report today and this is {abs_delta} {color}[{relativity} last week] {last_week_full_date}.
     ''', unsafe_allow_html=True)
 
 def bar_facets(dataframe,attendance_date,full_date,facet_by,number_of_facets): # create bar chart groups/facets
@@ -437,18 +437,18 @@ def bar_facets(dataframe,attendance_date,full_date,facet_by,number_of_facets): #
         facets_chart.altair_chart(chart)
     except: pass
 
-def filtered_people_list(dataframe, full_date, date_column, type:str, cols:list): # filter dataframe for absent and unaccounted for people
+def filtered_people_list(dataframe, full_date, date_column, type:str, cols:list): # filter dataframe for incomplete and unaccounted for tasks
     cols.append(date_column)
     df_subset = dataframe.loc[:,cols]  # select revelant columns
-    if type.title()=='Unaccounted': # for unaccounted people
-        st.write(f'People unaccounted for in Sunday operations on {full_date}')
-        df = df_subset[(df_subset[date_column] != 'Absent') & (df_subset[date_column] != 'Present')].reset_index(drop=True) # filter to people who have neither been recorded as present or absent
-    elif type.title()=='Absent': # for absent people
-        st.write(f'People {type.lower()} in Sunday operations on {full_date}')
-        df = df_subset[df_subset[date_column] == type.title()].reset_index(drop=True) # filter to people who have been marked absent
+    if type.title()=='Unaccounted': # for unaccounted tasks
+        st.write(f'tasks unaccounted for in Weekly Report on {full_date}')
+        df = df_subset[(df_subset[date_column] != 'incomplete') & (df_subset[date_column] != 'Completed')].reset_index(drop=True) # filter to tasks who have neither been recorded as Completed or incomplete
+    elif type.title()=='incomplete': # for incomplete tasks
+        st.write(f'tasks {type.lower()} in Weekly Report on {full_date}')
+        df = df_subset[df_subset[date_column] == type.title()].reset_index(drop=True) # filter to tasks who have been marked incomplete
     st.dataframe(df) # show dataframe
 
-def attendance_metric(dataframe,columns,att_percent_query): # select people with attendance of a certain percentage
+def attendance_metric(dataframe,columns,att_percent_query): # select tasks with attendance of a certain percentage
     att = dataframe.query(att_percent_query) 
     att = att.loc[:,columns] # return specified columns
     return att
@@ -458,9 +458,9 @@ def timeseries_trends(dataframe, columns, facet_by='region',tab_name='team'): # 
     try: dataframe['date'] = pd.to_datetime(dataframe['date'])
     except: dataframe['date'] = pd.to_datetime(dataframe['date'], format='_%d_%b_%y')
     individual_att_ytd = dataframe.drop(['date','attendance'], axis=1).drop_duplicates() # drop the date and attendance columns and select unique records
-    poor_attendance = attendance_metric(individual_att_ytd, columns, att_percent_query='att_ytd < 50.00') # identify people with poor attendance
-    good_attendance = attendance_metric(individual_att_ytd, columns, att_percent_query='att_ytd >= 70.00') # identify people with good attendance
-    average_attendance = attendance_metric(individual_att_ytd, columns, att_percent_query='att_ytd >=50.00 & att_ytd<70.00') # identify people with average attendance
+    poor_attendance = attendance_metric(individual_att_ytd, columns, att_percent_query='att_ytd < 50.00') # identify tasks with poor attendance
+    good_attendance = attendance_metric(individual_att_ytd, columns, att_percent_query='att_ytd >= 70.00') # identify tasks with good attendance
+    average_attendance = attendance_metric(individual_att_ytd, columns, att_percent_query='att_ytd >=50.00 & att_ytd<70.00') # identify tasks with average attendance
     dashboard_tab, dedicated_tab, inprogress_tab, icu_tab = st.tabs(['Attendance trends', f'Dedicated {tab_name}', f'{tab_name.title()}-in-progress', f'ICU {tab_name}']) # create seperate tabs for the different stats
     with dashboard_tab: # for time series dashboard
         intro_column, start_column, and_column, end_column = st.columns(4) # create columns for filtering date inputs
@@ -471,10 +471,10 @@ def timeseries_trends(dataframe, columns, facet_by='region',tab_name='team'): # 
         end_date=end_column.date_input('end date', key='end', value=date.today()) # create date input for end date, default as today's date
         end_datetime = pd.to_datetime(end_date) # convert end date to datetime format
         filtered_dates = dataframe.loc[(dataframe['date']>=start_datetime) & (dataframe['date']<=end_datetime)] # filter data to entries between start and end dates, both inclusive
-        filtered_linechart_data = filtered_dates.groupby(['date','attendance'])['full_name'].count().reset_index().query('attendance == "Present"') # group by date and attendance and select present attendance
+        filtered_linechart_data = filtered_dates.groupby(['date','attendance'])['full_name'].count().reset_index().query('attendance == "Completed"') # group by date and attendance and select Completed attendance
         mean_att = round(filtered_linechart_data['full_name'].mean()) # calculate mean
         st.header(''); mean_column, trend_column = st.columns([1.5,4]) # create columns for mean and line chart
-        mean_column.write(f'You have {len(individual_att_ytd)} people to account for.') # write how many people to account for
+        mean_column.write(f'You have {len(individual_att_ytd)} tasks to account for.') # write how many tasks to account for
         mean_column.metric('Average attendance', value=mean_att, help='Average attendance over the selected timeframe') # write mean metric
         with trend_column: # create line chart
             chart = alt.Chart(filtered_linechart_data).mark_line(color='#8e43e7')\
@@ -482,9 +482,9 @@ def timeseries_trends(dataframe, columns, facet_by='region',tab_name='team'): # 
                     y=alt.Y('full_name', axis=alt.Axis(title='Attendees')),
                     tooltip=['date:T', 'full_name'])
             st.altair_chart(chart, use_container_width=True)
-        if facet_by == 'full_name': faceted_linechart_data = filtered_dates.groupby(['date',facet_by,'attendance']).count().reset_index().query('attendance == "Present"') # aggregating by names
+        if facet_by == 'full_name': faceted_linechart_data = filtered_dates.groupby(['date',facet_by,'attendance']).count().reset_index().query('attendance == "Completed"') # aggregating by names
         else: # otherwise; also create faceted chart in an expander
-            faceted_linechart_data = filtered_dates.groupby(['date',facet_by,'attendance'])['full_name'].count().reset_index().query('attendance == "Present"')
+            faceted_linechart_data = filtered_dates.groupby(['date',facet_by,'attendance'])['full_name'].count().reset_index().query('attendance == "Completed"')
             faceted_linechart_data = faceted_linechart_data.pivot(index=facet_by,columns='date', values='full_name')
             faceted_linechart_data = faceted_linechart_data.replace(np.nan,0).reset_index()
             faceted_linechart_data = pd.melt(faceted_linechart_data, id_vars=[facet_by], var_name='date', value_name='full_name')
@@ -500,12 +500,12 @@ def timeseries_trends(dataframe, columns, facet_by='region',tab_name='team'): # 
             chart_expander = st.expander(f'View trends by: {title}')
             chart=chart_expander.altair_chart(chart)
     with dedicated_tab: # for dedicated attendees
-        st.success((f'You have {good_attendance.shape[0]} dedicated person/people'))
+        st.success((f'You have {good_attendance.shape[0]} dedicated people'))
         # create table of count per group
         attendance_count = good_attendance[facet_by].value_counts().to_frame().reset_index().rename(columns={'index':f'{facet_by}', f'{facet_by}':'count'})
         st.dataframe(attendance_count)
     with inprogress_tab: # for average attendees
-        st.warning(f'You have {average_attendance.shape[0]} person/people on the fence')
+        st.warning(f'You have {average_attendance.shape[0]} people on the fence')
         # create table of count per group
         attendance_count = average_attendance[facet_by].value_counts().to_frame().reset_index().rename(columns={'index':f'{facet_by}', f'{facet_by}':'count'})
         st.dataframe(attendance_count)
