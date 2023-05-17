@@ -157,23 +157,25 @@ def get_img_with_href(local_img_path, target_url): # refernece local image and h
         </a>'''
     return html_code
 
-def page_intro(header,body): # default page elements
-    logo = Image.open('pictures/browser-tab-logo.png')
-    inset_logo = resize_image(logo,30)
-    logo_column, header_column = st.columns([1,25]) # create columns for logo and header; ratio needs adjustment if layout is changed to centered
-    logo_column.title('')
-    logo_column.image(inset_logo) # insert the body logo
+# create default inset image, title, body, and sidebar elements
+def page_intro(image, header, body):
+    inset_image = resize_image(image,30) # resize image to a fixed height of 30 pixels
+    # create columns for logo and header; 
+    # column ratio needs adjustment if layout in st.set_page_config is changed to centered    
+    image_column, header_column = st.columns([1,25])
+    image_column.title('')
+    image_column.image(inset_image) # insert the body logo
     header_column.title(header) # write the header
     st.markdown(body) # write the body
-    
+
     with st.sidebar: # add a description to the sidebar
         sb_placeholder = st.empty() # add to a container
-        with sb_placeholder.container():
+        with sb_placeholder.container(): # write the header and body of the sidebar
             st.title('BuyMart Ecommerce Store')
             st.markdown('''This is a fictitious ecommerce company that fills a weekly KPI report on Fridays.<br>
-            <font style="color:#8e43e7">Report entries in this table have been randomly filled from **6th of January, 2023 to 26th of May, 2023.**</font><br>
-            There is a special bonus given at the end of the year based on your weekly completion rate percentage throughout the year.<br>
-            There are no breaks due to public holidays except on Christmas Day and New Year's Day''', unsafe_allow_html=True)
+                        <font style="color:#8e43e7">Report entries in this table have been randomly filled from **6th of January, 2023 to 26th of May, 2023.**</font><br>
+                        There is a special bonus given at the end of the year based on your weekly completion rate percentage throughout the year.<br>
+                        There are no breaks due to public holidays except on Christmas Day and New Year's Day''', unsafe_allow_html=True)
     return sb_placeholder # store this sidebar placeholder to a variable when calling the function
 
 def password_entered(): # storing session usernames and passwords

@@ -3,9 +3,11 @@ import streamlit as st
 import os
 from functions import page_intro, get_img_with_href # collection of user defined functions
 
-st.set_page_config(page_title='BuyMart Data Management', page_icon=Image.open('pictures/browser-tab-logo.png'), layout='wide') # set the page layout
+logo = Image.open('pictures/browser-tab-logo.png')
 
-page_intro('BuyMart Data Management Studio','Welcome to the data management studio. Please select your group below.')
+st.set_page_config(page_title='BuyMart Data Management', page_icon=logo, layout='wide') # set the page layout
+
+page_intro(logo, 'BuyMart Data Management Studio','Welcome to the data management studio. Please select your group below.')
 
 stack1, stack2, stack3 = st.columns([1.2,1,1.2]) # stack of different groups
 
