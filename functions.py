@@ -170,10 +170,9 @@ def page_intro(header,body): # default page elements
         sb_placeholder = st.empty() # add to a container
         with sb_placeholder.container():
             st.title('BuyMart Ecommerce Store')
-            st.markdown('''This is a fictitious ecommerce company that runs special inventorization operations on Sundays.<br>
-            There is a shift roster for every member of staff, however, attendance is not compulsory as long as someone can cover your shift.<br>
-            <font style="color:#8e43e7">Attendance entries in this table have been randomly filled from **8th of January, 2023 to 28th of May, 2023.**</font><br>
-            There is a special bonus given at the end of the year based on your percentage attendance throughout the year.<br>
+            st.markdown('''This is a fictitious ecommerce company that fills a weekly kpi report on Fridays.<br>
+            <font style="color:#8e43e7">Report entries in this table have been randomly filled from **6th of January, 2023 to 26th of May, 2023.**</font><br>
+            There is a special bonus given at the end of the year based on your weekly completion rate percentage throughout the year.<br>
             There are no breaks due to public holidays except on Christmas Day and New Year's Day''', unsafe_allow_html=True)
     return sb_placeholder # store this sidebar placeholder to a variable when calling the function
 
