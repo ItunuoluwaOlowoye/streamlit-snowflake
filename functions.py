@@ -166,11 +166,11 @@ def page_intro(header,body): # default page elements
     header_column.title(header) # write the header
     st.markdown(body) # write the body
     
-    with st.sidebar: # add the creed to the sidebar
+    with st.sidebar: # add a description to the sidebar
         sb_placeholder = st.empty() # add to a container
         with sb_placeholder.container():
             st.title('BuyMart Ecommerce Store')
-            st.markdown('''This is a fictitious ecommerce company that fills a weekly kpi report on Fridays.<br>
+            st.markdown('''This is a fictitious ecommerce company that fills a weekly KPI report on Fridays.<br>
             <font style="color:#8e43e7">Report entries in this table have been randomly filled from **6th of January, 2023 to 26th of May, 2023.**</font><br>
             There is a special bonus given at the end of the year based on your weekly completion rate percentage throughout the year.<br>
             There are no breaks due to public holidays except on Christmas Day and New Year's Day''', unsafe_allow_html=True)
