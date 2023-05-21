@@ -14,18 +14,18 @@ st.set_page_config(page_title='BuyMart Human Resources Portal', page_icon=browse
 
 placeholder = st.empty() # create a main content placeholder
 with placeholder.container(): # create a container within the placeholder
-    sb_placeholder = functions.page_intro('Human Resources Portal',f"This portal is only accessible to HR (human resources) staff. This is where attendance for Sunday operations is logged by HR. You can find the list of usernames and passwords [here](https://docs.google.com/spreadsheets/d/1xLFmSlsziJEqIaiyN-1XO5Ew2UhZCV0x4D9_TKm9uuk/edit#gid=0)") # write the default page elements and store sidebar placeholder in a variable
+    sb_placeholder = functions.page_intro(browser_tab_logo, 'Human Resources Portal',f"This portal is only accessible to HR (human resources) staff. This is where attendance for Sunday operations is logged by HR. You can find the list of usernames and passwords [here](https://docs.google.com/spreadsheets/d/1xLFmSlsziJEqIaiyN-1XO5Ew2UhZCV0x4D9_TKm9uuk/edit#gid=0)") # write the default page elements and store sidebar placeholder in a variable
     
 if functions.authenticate_user(placeholder,sb_placeholder):
     if st.session_state.user.groups.filter(name__in=["Human Resources"]).exists(): # after authentication and confirming that user is in hr group
         today = date.today() # today's date
-        checkin_location = (st.session_state.user.last_name).split()[-1] # store hr location in a variable
+        input_location = (st.session_state.user.last_name).split()[-1] # store hr location in a variable
         greeting,clear_cache,page_header,attendance_date,full_date,date_column,date_comment_column = functions.database_intro('HR Database') # default page entries
         columns = ['full_name','region','email_address','phone_number','att_ytd',date_column,date_comment_column,'unique_id'] # columns needed
         try:
             full_database = functions.load_data() # load data and store in cache
             checkin_df = full_database.loc[:,columns] # select only needed columns
-            columns.append(f'checkin_location{date_column}') # include hr location column
+            columns.append(f'input_location{date_column}') # include hr location column
             unpivot_dates_df = functions.arrange_dates(full_database,columns,date_column,date_comment_column) # convert date columns to one column in olap format
             dept_or_branch_numbers, total_members, last_week_full_date, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_total_attendance, last_week_present_attendance, last_week_present_attendance_percent = functions.specific_date_summary_stats(unpivot_dates_df,attendance_date,dept_or_branch=None) # calculate summary stats
         except:
@@ -38,17 +38,17 @@ if functions.authenticate_user(placeholder,sb_placeholder):
             interactive_table, full_modified_df = functions.edit_table(full_database, filtered_checkin_df, date_column, editable_columns=[date_comment_column]) # create interactive table
             functions.recalc_att_ytd(full_modified_df,today) # recalculate att for updates
             if full_modified_df.empty is False: # if updates exist
-                functions.save_data_updates(full_modified_df,date_column,group_logs=f'HR_{checkin_location}') # append to snowflake db
+                functions.save_data_updates(full_modified_df,date_column,group_logs=f'HR_{input_location}') # append to snowflake db
             st.write('The data is saved in a temporary table. Please refresh the table at the end of your session to update the main table')
             refresh = st.button('Refresh table') # include button to refresh original db
             if refresh:
-                functions.update_db(group_logs=f'HR_{checkin_location}') # refresh original db with updates and also connected Google Sheet
+                functions.update_db(group_logs=f'HR_{input_location}') # refresh original db with updates and also connected Google Sheet
                 st.cache_data.clear() # clear cache
                 st.experimental_rerun() # rerun app to get latest updates
         elif report_type=='See specific attendance report': # for attendance report
             st.header(f'Report: {full_date}')
             functions.specific_date_dashboard(full_date, dept_or_branch_numbers, total_members, todays_total_attendance, todays_present_attendance, todays_present_attendance_percent, last_week_full_date, last_week_present_attendance) # create dashboard
-            functions.bar_facets(unpivot_dates_df,attendance_date,full_date,facet_by=f'checkin_location{date_column}',number_of_facets=3) # show stats grouped by hr location
+            functions.bar_facets(unpivot_dates_df,attendance_date,full_date,facet_by=f'input_location{date_column}',number_of_facets=3) # show stats grouped by hr location
             functions.bar_facets(unpivot_dates_df,attendance_date,full_date,facet_by='region',number_of_facets=3) # show stats grouped by region
         else: # create time series trends
             dashboard_tab,dedicated_tab,inprogress_tab,icu_tab = functions.timeseries_trends(unpivot_dates_df, columns, facet_by='region',tab_name='attendees')
