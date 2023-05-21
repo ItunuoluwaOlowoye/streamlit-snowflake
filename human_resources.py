@@ -21,7 +21,7 @@ if functions.authenticate_user(placeholder,sb_placeholder):
         today = date.today() # today's date
         input_location = (st.session_state.user.last_name).split()[-1] # store hr location in a variable
         greeting,clear_cache,page_header,attendance_date,full_date,date_column,date_comment_column = functions.database_intro('HR Database') # default page entries
-        columns = ['full_name','region','email_address','phone_number','att_ytd',date_column,date_comment_column,'unique_id'] # columns needed
+        columns = ['full_name','region','email_address','phone_number','wly_cmpltn_ytd',date_column,date_comment_column,'unique_id'] # columns needed
         #try:
         full_database = functions.load_data() # load data and store in cache
         checkin_df = full_database.loc[:,columns] # select only needed columns
