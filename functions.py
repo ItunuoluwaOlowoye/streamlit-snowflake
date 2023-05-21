@@ -272,7 +272,7 @@ def edit_table(full_db, dataframe, date_column, editable_columns:list): # edit i
 
 def recalc_att_ytd(dataframe, today): # select sundays on or before sundays
     date_list_column = [] # create list to store dates from date columns
-    start_column = dataframe.columns.get_loc('_08_Jan_23') # select index of first date column
+    start_column = dataframe.columns.get_loc('_06_Jan_23') # select index of first date column
     while int(start_column) < dataframe.shape[1]: # store date columns into the list
         date_list_column.append(pd.to_datetime(dataframe.columns[start_column], format='_%d_%b_%y'))
         start_column = int(start_column) + 3
