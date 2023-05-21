@@ -229,7 +229,7 @@ def load_data(sort_columns=['full_name']): # load dataset and store in cache
     success_placeholder.empty()
     df = df.dropna(how='all') # drop null rows
     for column in list(df.columns): # fill null cells in columns that are not datetime or float
-        if column != 'date_hired' and column != 'wly_cmpltn_rate':
+        if column != 'date_hired' and column != 'wly_cmpltn_ytd':
             df[column].fillna('',inplace=True)
     df['date_hired'] = pd.to_datetime(df['date_hired'], infer_datetime_format=True) # change date column to datetime type
     df.sort_values(by=sort_columns, inplace=True) # sort by specified columns
@@ -257,7 +257,7 @@ def edit_table(full_db, dataframe, date_column, editable_columns:list): # edit i
     # build interactive table
     interactive_table = AgGrid(dataframe, gridOptions=grid_options, fit_columns_on_grid_load=False, allow_unsafe_jscode=True, try_to_convert_back_to_original_types=False, enable_enterprise_modules=False)
     df = pd.DataFrame(interactive_table['data']) # convert interactive table to dataframe
-    df['wly_cmpltn_rate'] = df['wly_cmpltn_rate'].astype(float)
+    df['wly_cmpltn_ytd'] = df['wly_cmpltn_ytd'].astype(float)
     modified_df = df.merge(dataframe, how='left', indicator=True) # find modifications/updates
     modified_df = modified_df[modified_df['_merge'] == 'left_only'].drop('_merge',axis=1) # keep only modifications/updates
     modified_df_unique_row = modified_df['unique_id'] # select column to update full database with
@@ -288,8 +288,8 @@ def recalc_att_ytd(dataframe, today): # select sundays on or before sundays
         all_count = sundays_by_today.count() # count total days
         try:
             present_count = sundays_by_today.value_counts()['Completed'] # count days Completed
-            dataframe.loc[i,'wly_cmpltn_rate'] = round((present_count/all_count*100),2) # recalculate wly_cmpltn_rate
-        except: dataframe.loc[i,'wly_cmpltn_rate'] = 0.00
+            dataframe.loc[i,'wly_cmpltn_ytd'] = round((present_count/all_count*100),2) # recalculate wly_cmpltn_ytd
+        except: dataframe.loc[i,'wly_cmpltn_ytd'] = 0.00
     return dataframe
 
 def save_data_updates(dataframe,date_column,group_logs): # save the updates in a log table
@@ -360,7 +360,7 @@ def presentcalc(dataframe): # calculate tasks Completed
 
 def specific_date_summary_stats(dataframe,attendance_date,dept_or_branch='dept'): # calculate summary statistics for a specific date, you can group by team or branch
     dataframe['date'] = pd.to_datetime(dataframe['date'], format='_%d_%b_%y').dt.strftime('%Y-%m-%d') # put date column in corect format
-    dataframe['wly_cmpltn_rate'] = dataframe['wly_cmpltn_rate'].replace(np.nan,0) # let all attendance percent values be numeric
+    dataframe['wly_cmpltn_ytd'] = dataframe['wly_cmpltn_ytd'].replace(np.nan,0) # let all attendance percent values be numeric
     selected_day_df=dataframe[dataframe['date']==str(attendance_date)] # select data from the specified date
     if dept_or_branch is None: dept_or_branch_numbers = pd.DataFrame() # empty dataframe if not grouped by team or branch
     else: dept_or_branch_numbers = selected_day_df[dept_or_branch].value_counts().to_frame() # count of team or branch
@@ -459,9 +459,9 @@ def timeseries_trends(dataframe, columns, facet_by='region',tab_name='team'): # 
     try: dataframe['date'] = pd.to_datetime(dataframe['date'])
     except: dataframe['date'] = pd.to_datetime(dataframe['date'], format='_%d_%b_%y')
     individual_att_ytd = dataframe.drop(['date','attendance'], axis=1).drop_duplicates() # drop the date and attendance columns and select unique records
-    poor_attendance = attendance_metric(individual_att_ytd, columns, att_percent_query='wly_cmpltn_rate < 50.00') # identify tasks with poor attendance
-    good_attendance = attendance_metric(individual_att_ytd, columns, att_percent_query='wly_cmpltn_rate >= 70.00') # identify tasks with good attendance
-    average_attendance = attendance_metric(individual_att_ytd, columns, att_percent_query='wly_cmpltn_rate >=50.00 & wly_cmpltn_rate<70.00') # identify tasks with average attendance
+    poor_attendance = attendance_metric(individual_att_ytd, columns, att_percent_query='wly_cmpltn_ytd < 50.00') # identify tasks with poor attendance
+    good_attendance = attendance_metric(individual_att_ytd, columns, att_percent_query='wly_cmpltn_ytd >= 70.00') # identify tasks with good attendance
+    average_attendance = attendance_metric(individual_att_ytd, columns, att_percent_query='wly_cmpltn_ytd >=50.00 & wly_cmpltn_ytd<70.00') # identify tasks with average attendance
     dashboard_tab, dedicated_tab, inprogress_tab, icu_tab = st.tabs(['Attendance trends', f'Dedicated {tab_name}', f'{tab_name.title()}-in-progress', f'ICU {tab_name}']) # create seperate tabs for the different stats
     with dashboard_tab: # for time series dashboard
         intro_column, start_column, and_column, end_column = st.columns(4) # create columns for filtering date inputs
