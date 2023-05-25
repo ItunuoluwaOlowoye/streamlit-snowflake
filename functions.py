@@ -134,6 +134,7 @@ class BtnCellRenderer {
 };
 ''')
 
+# create function to resize images to a fixed height without disrupting the aspect ratio
 def resize_image(image, height):
     image_size = image.size # set the original image size to a variable
     image_width, image_height = (image_size[0], image_size[1]) # separate the width and height
@@ -143,14 +144,16 @@ def resize_image(image, height):
     new_image = image.resize((new_image_width,new_image_height)) # return the newly resized image
     return new_image
 
-def get_base64_of_bin_file(bin_file): # get base64 of the pictures
-    with open(bin_file, 'rb') as f:
+def base64_image(path):
+    with open(path, 'rb') as f:
         data = f.read()
     return base64.b64encode(data).decode()
 
-def get_img_with_href(local_img_path, target_url): # refernece local image and hyperlink to web page
+# reference local image and hyperlink to web page
+def hyperlink_html(local_img_path, target_url):
+		# get the 
     img_format = os.path.splitext(local_img_path)[-1].replace('.', '')
-    bin_str = get_base64_of_bin_file(local_img_path)
+    bin_str = base64_image(local_img_path)
     html_code = f'''
         <a href="{target_url}">
             <img src="data:image/{img_format};base64,{bin_str}" />
