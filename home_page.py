@@ -1,20 +1,32 @@
-from PIL import Image
+# import relevant packages
 import streamlit as st
 import os
-from functions import page_intro, get_img_with_href # collection of user defined functions
+from PIL import Image
+import base64
+# import user-defined functions script
+import functions
 
+# open an image and save it as a variable
 logo = Image.open('pictures/browser-tab-logo.png')
+# set the app page's title, icon, and layout
+st.set_page_config(page_title='BuyMart Data Management', 
+										page_icon= logo, 
+										layout='wide')
 
-st.set_page_config(page_title='BuyMart Data Management', page_icon=logo, layout='wide') # set the page layout
+# set up default elements
+functions.page_intro(image=logo, header='BuyMart Data Management Studio',
+					body='Welcome to the data management studio. Please select your group below.')
 
-page_intro(logo, 'BuyMart Data Management Studio','Welcome to the data management studio. Please select your group below.')
+# create three columns with the first and third slightly larger than the middle
+stack1, stack2, stack3 = st.columns([1.2,1,1.2])
 
-stack1, stack2, stack3 = st.columns([1.2,1,1.2]) # stack of different groups
-
-# link all pictures to url
+# create a dictionary to store hyperlinks
 html_dict = {}
+
+# for each picture in the pictures directory, create the hyperlink
 for picture in os.listdir('pictures'):
-    html_dict[picture[:-4]] = get_img_with_href('pictures/'+picture, f'https://buy-mart-{picture[:-4]}.streamlit.app/')
+	picture_name = picture[:-4] # remove the .png/.jpg from the picture name
+	html_dict[picture_name] = functions.hyperlink_html('pictures/'+picture, f'https://buy-mart-{picture_name}.streamlit.app/')
 
 # add hyperlinked pictures to page
 stack1.markdown(html_dict['human-resources'], unsafe_allow_html=True)
